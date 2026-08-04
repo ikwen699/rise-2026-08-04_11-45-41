@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using Unity.Cinemachine;
 using UnityEditor;
@@ -245,6 +246,7 @@ namespace Rise.EditorTools
             GameManager gameManager = EnsureGameManager();
             JobDefinition job = EnsureJobDefinition();
             EnsureWorkStation(job);
+            EnsureShop();
             EnsureHUD(gameManager);
 
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
@@ -293,6 +295,28 @@ namespace Rise.EditorTools
             station.SetJob(job);
         }
 
+        private static void EnsureShop()
+        {
+            ShopStand existing = Object.FindFirstObjectByType<ShopStand>();
+            if (existing != null) return;
+
+            GameObject stand = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            stand.name = "ShopStand";
+            stand.transform.position = new Vector3(0f, 0.6f, 26f);
+            stand.transform.localScale = new Vector3(2.5f, 1.2f, 2.5f);
+            Object.DestroyImmediate(stand.GetComponent<Collider>());
+            SetRendererMaterial(stand, CreateMaterial("M_ShopStand", new Color(0.6f, 0.25f, 0.8f)));
+
+            ShopStand shop = stand.AddComponent<ShopStand>();
+            shop.SetItems(new List<ShopItemData>
+            {
+                new ShopItemData { itemName = "Bread", price = 5 },
+                new ShopItemData { itemName = "Shirt", price = 25 },
+                new ShopItemData { itemName = "Shoes", price = 40 },
+                new ShopItemData { itemName = "Watch", price = 120 }
+            });
+        }
+
         private static void EnsureHUD(GameManager gameManager)
         {
             // Remove any old HUD to avoid duplicates.
@@ -311,9 +335,10 @@ namespace Rise.EditorTools
             Text day = CreateHudText("Day", canvasGO.transform, new Vector2(0.02f, 0.87f), new Vector2(0f, 1f), 44, TextAnchor.UpperLeft);
             Text time = CreateHudText("Time", canvasGO.transform, new Vector2(0.02f, 0.79f), new Vector2(0f, 1f), 44, TextAnchor.UpperLeft);
             Text work = CreateHudText("Work", canvasGO.transform, new Vector2(0.5f, 0.04f), new Vector2(0.5f, 0f), 34, TextAnchor.LowerCenter);
+            Text shop = CreateHudText("ShopMenu", canvasGO.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), 38, TextAnchor.MiddleCenter);
 
             GameHUD hud = canvasGO.AddComponent<GameHUD>();
-            hud.Configure(gameManager, money, time, day, work);
+            hud.Configure(gameManager, money, time, day, work, shop);
         }
 
         private static Text CreateHudText(string name, Transform parent, Vector2 anchor, Vector2 pivot, int size, TextAnchor align)

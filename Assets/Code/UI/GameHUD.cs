@@ -12,6 +12,7 @@ namespace Rise.UI
         [SerializeField] private Text timeText;
         [SerializeField] private Text dayText;
         [SerializeField] private Text workText;
+        [SerializeField] private Text shopText;
         [SerializeField] private GameManager gameManager;
 
         private void Start()
@@ -36,13 +37,43 @@ namespace Rise.UI
             gameManager.OnWorkingChanged -= HandleWorking;
         }
 
-        public void Configure(GameManager manager, Text money, Text time, Text day, Text work)
+        public void Configure(GameManager manager, Text money, Text time, Text day, Text work, Text shop)
         {
             gameManager = manager;
             moneyText = money;
             timeText = time;
             dayText = day;
             workText = work;
+            shopText = shop;
+        }
+
+        private void Update()
+        {
+            if (gameManager == null) return;
+
+            ShopStand shop = gameManager.ActiveShop;
+            if (shop != null && shop.IsOpen)
+            {
+                SetText(shopText, shop.GetMenuText());
+            }
+            else
+            {
+                if (shopText != null && shopText.text.Length > 0) shopText.text = "";
+
+                if (!gameManager.Jobs.IsWorking && IsNearAnyShop())
+                {
+                    SetText(workText, "Press E to shop");
+                }
+            }
+        }
+
+        private bool IsNearAnyShop()
+        {
+            for (int i = 0; i < gameManager.ShopCount; i++)
+            {
+                if (gameManager.GetShop(i).IsPlayerInRange) return true;
+            }
+            return false;
         }
 
         private void RefreshAll()

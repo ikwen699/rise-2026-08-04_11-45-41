@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Rise.SaveSystem;
 using Rise.Systems;
@@ -30,10 +31,15 @@ namespace Rise.Core
         public Wallet Wallet { get; private set; }
         public TimeSystem Clock { get; private set; }
         public JobSystem Jobs { get; private set; }
+        public ShopStand ActiveShop { get; set; }
 
+        private readonly List<ShopStand> _shops = new List<ShopStand>();
         private float _jobEarnAccumulator;
         private Transform _player;
         private Light _sun;
+
+        public int ShopCount => _shops.Count;
+        public ShopStand GetShop(int index) => _shops[index];
 
         private void Awake()
         {
@@ -66,6 +72,7 @@ namespace Rise.Core
             FindPlayer();
             FindSun();
             SetupWorkStations();
+            SetupShops();
         }
 
         private void Update()
@@ -100,6 +107,17 @@ namespace Rise.Core
             foreach (WorkStation station in stations)
             {
                 station.Configure(_player, this);
+            }
+        }
+
+        private void SetupShops()
+        {
+            ShopStand[] stands = FindObjectsByType<ShopStand>(FindObjectsInactive.Include);
+            _shops.Clear();
+            foreach (ShopStand stand in stands)
+            {
+                stand.Configure(_player, this);
+                _shops.Add(stand);
             }
         }
 
