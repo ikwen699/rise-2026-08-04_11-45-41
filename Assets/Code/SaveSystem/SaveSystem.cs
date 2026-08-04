@@ -13,6 +13,13 @@ namespace Rise.SaveSystem
         public float energy = 100f;
         public float hunger = 100f;
         public int food;
+        public int giftFlowers;
+        public int giftChocolate;
+        public int giftRings;
+        public float affection;
+        public bool married;
+        public int marriageDay;
+        public bool childSpawned;
     }
 
     public static class GameSave

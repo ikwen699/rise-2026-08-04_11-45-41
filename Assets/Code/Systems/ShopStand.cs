@@ -6,12 +6,21 @@ using UnityEngine.InputSystem;
 
 namespace Rise.Systems
 {
+    public enum ShopItemType
+    {
+        Item,
+        Food,
+        GiftFlower,
+        GiftChocolate,
+        GiftRing
+    }
+
     [Serializable]
     public class ShopItemData
     {
         public string itemName = "Item";
         public int price = 10;
-        public bool isFood;
+        public ShopItemType itemType = ShopItemType.Item;
     }
 
     public class ShopStand : MonoBehaviour
@@ -103,14 +112,27 @@ namespace Rise.Systems
             if (_gameManager.Wallet.CanAfford(item.price))
             {
                 _gameManager.Wallet.Spend(item.price);
-                if (item.isFood && _gameManager.Needs != null)
+                switch (item.itemType)
                 {
-                    _gameManager.Needs.AddFood();
-                    SetMessage("Bought " + item.itemName + " x1  (press Q to eat)");
-                }
-                else
-                {
-                    SetMessage("Bought " + item.itemName + " for $" + item.price);
+                    case ShopItemType.Food:
+                        _gameManager.Needs.AddFood();
+                        SetMessage("Bought " + item.itemName + " x1  (press Q to eat)");
+                        break;
+                    case ShopItemType.GiftFlower:
+                        _gameManager.Needs.AddGift(ShopItemType.GiftFlower);
+                        SetMessage("Bought " + item.itemName + " (a gift)");
+                        break;
+                    case ShopItemType.GiftChocolate:
+                        _gameManager.Needs.AddGift(ShopItemType.GiftChocolate);
+                        SetMessage("Bought " + item.itemName + " (a gift)");
+                        break;
+                    case ShopItemType.GiftRing:
+                        _gameManager.Needs.AddGift(ShopItemType.GiftRing);
+                        SetMessage("Bought " + item.itemName + " (a gift)");
+                        break;
+                    default:
+                        SetMessage("Bought " + item.itemName + " for $" + item.price);
+                        break;
                 }
             }
             else
@@ -131,7 +153,10 @@ namespace Rise.Systems
             sb.AppendLine("-- SHOP --");
             for (int i = 0; i < items.Count; i++)
             {
-                sb.AppendLine((i + 1) + ". " + items[i].itemName + "   $" + items[i].price);
+                string tag = "";
+                if (items[i].itemType == ShopItemType.Food) tag = "  (food)";
+                else if (items[i].itemType != ShopItemType.Item) tag = "  (gift)";
+                sb.AppendLine((i + 1) + ". " + items[i].itemName + "   $" + items[i].price + tag);
             }
             sb.Append("Press 1-" + Mathf.Min(items.Count, 9) + " to buy   E to close");
 

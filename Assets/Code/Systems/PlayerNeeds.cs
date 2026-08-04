@@ -27,6 +27,9 @@ namespace Rise.Systems
         public float Energy { get; private set; } = 100f;
         public float Hunger { get; private set; } = 100f;
         public int FoodCount { get; private set; }
+        public int GiftFlowers { get; private set; }
+        public int GiftChocolate { get; private set; }
+        public int GiftRings { get; private set; }
 
         public float MaxEnergy => maxEnergy;
         public float MaxHunger => maxHunger;
@@ -51,9 +54,43 @@ namespace Rise.Systems
             FoodCount = food;
         }
 
+        public void ApplyGifts(int flowers, int chocolate, int rings)
+        {
+            GiftFlowers = flowers;
+            GiftChocolate = chocolate;
+            GiftRings = rings;
+        }
+
         public void AddFood()
         {
             FoodCount++;
+        }
+
+        public void AddGift(ShopItemType type)
+        {
+            switch (type)
+            {
+                case ShopItemType.GiftFlower: GiftFlowers++; break;
+                case ShopItemType.GiftChocolate: GiftChocolate++; break;
+                case ShopItemType.GiftRing: GiftRings++; break;
+            }
+        }
+
+        public bool TryConsumeGift(ShopItemType type)
+        {
+            switch (type)
+            {
+                case ShopItemType.GiftFlower:
+                    if (GiftFlowers > 0) { GiftFlowers--; return true; }
+                    break;
+                case ShopItemType.GiftChocolate:
+                    if (GiftChocolate > 0) { GiftChocolate--; return true; }
+                    break;
+                case ShopItemType.GiftRing:
+                    if (GiftRings > 0) { GiftRings--; return true; }
+                    break;
+            }
+            return false;
         }
 
         public bool TryEat()

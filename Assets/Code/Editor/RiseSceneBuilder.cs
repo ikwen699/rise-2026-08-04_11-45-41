@@ -669,6 +669,7 @@ namespace Rise.EditorTools
             EnsureWorkStation(job);
             EnsurePlayerNeeds();
             EnsureShop();
+            EnsurePartner();
             EnsureHUD(gameManager);
 
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
@@ -738,11 +739,51 @@ namespace Rise.EditorTools
 
             shop.SetItems(new List<ShopItemData>
             {
-                new ShopItemData { itemName = "Bread", price = 5, isFood = true },
+                new ShopItemData { itemName = "Bread", price = 5, itemType = ShopItemType.Food },
+                new ShopItemData { itemName = "Flowers", price = 30, itemType = ShopItemType.GiftFlower },
+                new ShopItemData { itemName = "Chocolate", price = 20, itemType = ShopItemType.GiftChocolate },
+                new ShopItemData { itemName = "Ring", price = 500, itemType = ShopItemType.GiftRing },
                 new ShopItemData { itemName = "Shirt", price = 25 },
                 new ShopItemData { itemName = "Shoes", price = 40 },
                 new ShopItemData { itemName = "Watch", price = 120 }
             });
+        }
+
+        private static void EnsurePartner()
+        {
+            Partner existing = Object.FindFirstObjectByType<Partner>();
+            if (existing != null) return;
+
+            GameObject maya = new GameObject("Maya");
+            maya.transform.position = new Vector3(-12f, 0f, 19.5f);
+
+            Material skin = CreateMaterial("M_Skin", new Color(0.93f, 0.82f, 0.72f));
+            Material clothes = CreateMaterial("M_Clothes", new Color(0.85f, 0.4f, 0.45f));
+            Material hair = CreateMaterial("M_Hair", new Color(0.2f, 0.12f, 0.08f));
+
+            GameObject body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            body.name = "Body";
+            body.transform.SetParent(maya.transform);
+            body.transform.localPosition = new Vector3(0f, 0.9f, 0f);
+            body.transform.localScale = new Vector3(0.55f, 0.9f, 0.55f);
+            SetRendererMaterial(body, clothes);
+
+            GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            head.name = "Head";
+            head.transform.SetParent(maya.transform);
+            head.transform.localPosition = new Vector3(0f, 1.85f, 0f);
+            head.transform.localScale = Vector3.one * 0.42f;
+            SetRendererMaterial(head, skin);
+
+            GameObject hairGO = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            hairGO.name = "Hair";
+            hairGO.transform.SetParent(maya.transform);
+            hairGO.transform.localPosition = new Vector3(0f, 2.05f, -0.05f);
+            hairGO.transform.localScale = new Vector3(0.46f, 0.22f, 0.46f);
+            SetRendererMaterial(hairGO, hair);
+
+            Partner partner = maya.AddComponent<Partner>();
+            partner.skinMaterial = skin;
         }
 
         private static void EnsurePlayerNeeds()

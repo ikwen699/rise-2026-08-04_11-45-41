@@ -53,12 +53,24 @@ namespace Rise.UI
             if (gameManager == null) return;
 
             PlayerNeeds needs = gameManager.Needs;
-            if (needs != null) SetText(needsText, needs.NeedsText);
+            if (needs != null)
+            {
+                string line = needs.NeedsText;
+                if (gameManager.Partner != null) line += "   " + gameManager.Partner.StatusText;
+                SetText(needsText, line);
+            }
 
             ShopStand shop = gameManager.ActiveShop;
+            Partner partner = gameManager.Partner;
             if (shop != null && shop.IsOpen)
             {
                 SetText(shopText, shop.GetMenuText());
+                if (workText != null) workText.text = "";
+                return;
+            }
+            if (partner != null && partner.IsOpen)
+            {
+                SetText(shopText, partner.GetMenuText());
                 if (workText != null) workText.text = "";
                 return;
             }
@@ -77,6 +89,10 @@ namespace Rise.UI
             else if (needs != null && needs.HasMessage)
             {
                 hint = needs.Message;
+            }
+            else if (partner != null && partner.IsPlayerInRange)
+            {
+                hint = "Press E to talk to Maya";
             }
             else if (IsNearAnyShop())
             {

@@ -33,6 +33,7 @@ namespace Rise.Core
         public JobSystem Jobs { get; private set; }
         public PlayerNeeds Needs { get; private set; }
         public ShopStand ActiveShop { get; set; }
+        public Partner Partner { get; private set; }
 
         private readonly List<ShopStand> _shops = new List<ShopStand>();
         private float _jobEarnAccumulator;
@@ -76,10 +77,16 @@ namespace Rise.Core
             FindSun();
             SetupWorkStations();
             SetupShops();
+            SetupPartner();
 
             if (Needs != null && loaded != null)
             {
                 Needs.ApplySaved(loaded.energy, loaded.hunger, loaded.food);
+                Needs.ApplyGifts(loaded.giftFlowers, loaded.giftChocolate, loaded.giftRings);
+            }
+            if (Partner != null && loaded != null)
+            {
+                Partner.ApplySaved(loaded.affection, loaded.married, loaded.marriageDay, loaded.childSpawned);
             }
         }
 
@@ -137,6 +144,16 @@ namespace Rise.Core
             {
                 stand.Configure(_player, this);
                 _shops.Add(stand);
+            }
+        }
+
+        private void SetupPartner()
+        {
+            Partner partner = FindFirstObjectByType<Partner>();
+            if (partner != null)
+            {
+                partner.Configure(_player, this);
+                Partner = partner;
             }
         }
 
@@ -198,7 +215,14 @@ namespace Rise.Core
                 hourOfDay = Clock.HourOfDay,
                 energy = Needs != null ? Needs.Energy : 100f,
                 hunger = Needs != null ? Needs.Hunger : 100f,
-                food = Needs != null ? Needs.FoodCount : 0
+                food = Needs != null ? Needs.FoodCount : 0,
+                giftFlowers = Needs != null ? Needs.GiftFlowers : 0,
+                giftChocolate = Needs != null ? Needs.GiftChocolate : 0,
+                giftRings = Needs != null ? Needs.GiftRings : 0,
+                affection = Partner != null ? Partner.Affection : 0f,
+                married = Partner != null && Partner.Married,
+                marriageDay = Partner != null ? Partner.MarriageDay : 0,
+                childSpawned = Partner != null && Partner.ChildSpawned
             });
         }
 
