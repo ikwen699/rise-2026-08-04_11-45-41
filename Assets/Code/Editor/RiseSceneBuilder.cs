@@ -5,7 +5,10 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 using Rise.Core;
+using Rise.Systems;
+using Rise.UI;
 
 namespace Rise.EditorTools
 {
@@ -220,6 +223,119 @@ namespace Rise.EditorTools
             mat.color = color;
             EditorUtility.SetDirty(mat);
             return mat;
+        }
+
+        [MenuItem("Rise/Setup/Build Gameplay Systems")]
+        public static void BuildGameplaySystems()
+        {
+            Scene current = UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene();
+            if (current.name != OpenWorldSceneName)
+            {
+                if (!EditorUtility.DisplayDialog(
+                    "Build Gameplay Systems",
+                    "This expects the 'OpenWorld' scene to be active.\n\nContinue?",
+                    "Yes, open it", "Cancel"))
+                    return;
+                UnityEditor.SceneManagement.EditorSceneManager.OpenScene(OpenWorldScenePath);
+            }
+
+            materialsFolder = MaterialsFolder;
+            Directory.CreateDirectory(materialsFolder);
+
+            GameManager gameManager = EnsureGameManager();
+            JobDefinition job = EnsureJobDefinition();
+            EnsureWorkStation(job);
+            EnsureHUD(gameManager);
+
+            UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
+                UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
+            UnityEditor.SceneManagement.EditorSceneManager.SaveScene(
+                UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene(), OpenWorldScenePath);
+
+            Debug.Log("Rise: Gameplay systems built. Press Play, walk to the yellow work spot, and press E.");
+        }
+
+        private static GameManager EnsureGameManager()
+        {
+            GameManager existing = Object.FindFirstObjectByType<GameManager>();
+            if (existing != null) return existing;
+
+            GameObject gmGO = new GameObject("GameManager");
+            return gmGO.AddComponent<GameManager>();
+        }
+
+        private static JobDefinition EnsureJobDefinition()
+        {
+            const string path = "Assets/Data/Jobs/Job_GeneralWorker.asset";
+            JobDefinition job = AssetDatabase.LoadAssetAtPath<JobDefinition>(path);
+            if (job != null) return job;
+
+            Directory.CreateDirectory("Assets/Data/Jobs");
+            job = ScriptableObject.CreateInstance<JobDefinition>();
+            job.name = "Job_GeneralWorker";
+            AssetDatabase.CreateAsset(job, path);
+            return job;
+        }
+
+        private static void EnsureWorkStation(JobDefinition job)
+        {
+            WorkStation existing = Object.FindFirstObjectByType<WorkStation>();
+            if (existing != null) return;
+
+            GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            marker.name = "WorkSpot_Shop";
+            marker.transform.position = new Vector3(12f, 0.25f, 11.5f);
+            marker.transform.localScale = new Vector3(2.2f, 0.5f, 2.2f);
+            Object.DestroyImmediate(marker.GetComponent<Collider>());
+            SetRendererMaterial(marker, CreateMaterial("M_WorkSpot", new Color(1f, 0.8f, 0.1f)));
+
+            WorkStation station = marker.AddComponent<WorkStation>();
+            station.SetJob(job);
+        }
+
+        private static void EnsureHUD(GameManager gameManager)
+        {
+            // Remove any old HUD to avoid duplicates.
+            GameObject oldHud = GameObject.Find("GameHUD CanvaWindow");
+            if (oldHud != null) Object.DestroyImmediate(oldHud);
+
+            GameObject canvasGO = new GameObject("GameHUD CanvaWindow");
+            Canvas canvas = canvasGO.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+
+            CanvasScaler scaler = canvasGO.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+
+            Text money = CreateHudText("Money", canvasGO.transform, new Vector2(0.02f, 0.97f), new Vector2(0f, 1f), 60, TextAnchor.UpperLeft);
+            Text day = CreateHudText("Day", canvasGO.transform, new Vector2(0.02f, 0.87f), new Vector2(0f, 1f), 44, TextAnchor.UpperLeft);
+            Text time = CreateHudText("Time", canvasGO.transform, new Vector2(0.02f, 0.79f), new Vector2(0f, 1f), 44, TextAnchor.UpperLeft);
+            Text work = CreateHudText("Work", canvasGO.transform, new Vector2(0.5f, 0.04f), new Vector2(0.5f, 0f), 34, TextAnchor.LowerCenter);
+
+            GameHUD hud = canvasGO.AddComponent<GameHUD>();
+            hud.Configure(gameManager, money, time, day, work);
+        }
+
+        private static Text CreateHudText(string name, Transform parent, Vector2 anchor, Vector2 pivot, int size, TextAnchor align)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+
+            RectTransform rt = go.AddComponent<RectTransform>();
+            rt.anchorMin = anchor;
+            rt.anchorMax = anchor;
+            rt.pivot = pivot;
+            rt.sizeDelta = new Vector2(700f, 60f);
+
+            Text text = go.AddComponent<Text>();
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.fontSize = size;
+            text.alignment = align;
+            text.color = Color.white;
+            text.horizontalOverflow = HorizontalWrapMode.Overflow;
+            text.verticalOverflow = VerticalWrapMode.Overflow;
+            text.raycastTarget = false;
+            return text;
         }
     }
 }
