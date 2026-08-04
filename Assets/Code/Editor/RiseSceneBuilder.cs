@@ -84,6 +84,9 @@ namespace Rise.EditorTools
 
         private static void BuildWorld()
         {
+            GameObject oldWorld = GameObject.Find("World");
+            if (oldWorld != null) Object.DestroyImmediate(oldWorld);
+
             Transform world = GetOrCreateEmpty("World");
 
             GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -699,12 +702,17 @@ namespace Rise.EditorTools
 
         private static void EnsureWorkStation(JobDefinition job)
         {
+            Vector3 spot = new Vector3(12f, 0.25f, 14f);
             WorkStation existing = Object.FindFirstObjectByType<WorkStation>();
-            if (existing != null) return;
+            if (existing != null)
+            {
+                existing.transform.position = spot;
+                return;
+            }
 
             GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             marker.name = "WorkSpot_Shop";
-            marker.transform.position = new Vector3(12f, 0.25f, 14f);
+            marker.transform.position = spot;
             marker.transform.localScale = new Vector3(2.2f, 0.5f, 2.2f);
             Object.DestroyImmediate(marker.GetComponent<Collider>());
             SetRendererMaterial(marker, CreateMaterial("M_WorkSpot", new Color(1f, 0.8f, 0.1f)));
