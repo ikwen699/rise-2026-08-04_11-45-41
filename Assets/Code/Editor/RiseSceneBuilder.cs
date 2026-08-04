@@ -53,6 +53,34 @@ namespace Rise.EditorTools
             Debug.Log("Rise: OpenWorld scene built. Press Play to run.");
         }
 
+        [MenuItem("Rise/Setup/Build Environment Details")]
+        public static void BuildEnvironmentDetails()
+        {
+            Scene current = UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene();
+            if (current.name != OpenWorldSceneName)
+            {
+                if (!EditorUtility.DisplayDialog(
+                    "Build Environment Details",
+                    "This expects the 'OpenWorld' scene to be active.\n\nContinue?",
+                    "Yes, open it", "Cancel"))
+                    return;
+                UnityEditor.SceneManagement.EditorSceneManager.OpenScene(OpenWorldScenePath);
+            }
+
+            materialsFolder = MaterialsFolder;
+            Directory.CreateDirectory(materialsFolder);
+
+            EnsureEnvironment();
+            BuildTownDetails();
+
+            UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
+                UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
+            UnityEditor.SceneManagement.EditorSceneManager.SaveScene(
+                UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene(), OpenWorldScenePath);
+
+            Debug.Log("Rise: Environment details built. Press Play to view.");
+        }
+
         private static void BuildWorld()
         {
             Transform world = GetOrCreateEmpty("World");
@@ -191,6 +219,238 @@ namespace Rise.EditorTools
             {
                 cam.gameObject.AddComponent<CinemachineBrain>();
             }
+        }
+
+        private static void EnsureEnvironment()
+        {
+            Material sky = new Material(Shader.Find("Skybox/Procedural"));
+            sky.name = "Sky_Procedural";
+            sky.SetColor("_SkyTint", new Color(0.48f, 0.6f, 0.85f));
+            sky.SetColor("_GroundColor", new Color(0.42f, 0.42f, 0.36f));
+            sky.SetFloat("_Exposure", 1.15f);
+            sky.SetFloat("_AtmosphereThickness", 1.05f);
+            RenderSettings.skybox = sky;
+            RenderSettings.ambientLight = new Color(0.72f, 0.76f, 0.82f);
+            RenderSettings.fog = true;
+            RenderSettings.fogColor = new Color(0.82f, 0.86f, 0.92f);
+            RenderSettings.fogMode = FogMode.Exponential;
+            RenderSettings.fogDensity = 0.008f;
+
+            Light sun = Object.FindFirstObjectByType<Light>();
+            if (sun != null) sun.color = new Color(1f, 0.95f, 0.86f);
+        }
+
+        private static void BuildTownDetails()
+        {
+            GameObject worldGO = GameObject.Find("World");
+            Transform world = worldGO != null ? worldGO.transform : new GameObject("World").transform;
+
+            Transform old = world.Find("WorldDetails");
+            if (old != null) Object.DestroyImmediate(old.gameObject);
+
+            Transform details = new GameObject("WorldDetails").transform;
+            details.SetParent(world);
+
+            Material trunk = CreateMaterial("M_Trunk", new Color(0.42f, 0.28f, 0.15f));
+            Material leaves = CreateMaterial("M_Leaves", new Color(0.30f, 0.55f, 0.25f));
+            Material bush = CreateMaterial("M_Bush", new Color(0.27f, 0.50f, 0.22f));
+            Material rock = CreateMaterial("M_Rock", new Color(0.48f, 0.47f, 0.50f));
+            Material lamp = CreateMaterial("M_Lamp", new Color(0.15f, 0.15f, 0.18f));
+            Material lampHead = CreateMaterial("M_LampHead", new Color(1f, 0.85f, 0.5f));
+            Material fence = CreateMaterial("M_Fence", new Color(0.60f, 0.46f, 0.28f));
+            Material line = CreateMaterial("M_RoadLine", new Color(0.92f, 0.75f, 0.15f));
+            Material flowerRed = CreateMaterial("M_FlowerRed", new Color(0.85f, 0.2f, 0.2f));
+            Material flowerWhite = CreateMaterial("M_FlowerWhite", new Color(0.95f, 0.95f, 0.95f));
+
+            BuildRoadLines(details, line);
+            BuildTrees(details, trunk, leaves);
+            BuildBushes(details, bush);
+            BuildRocks(details, rock);
+            BuildFlowers(details, flowerRed, flowerWhite);
+            BuildLamps(details, lamp, lampHead);
+            BuildFences(details, fence);
+        }
+
+        private static void BuildRoadLines(Transform parent, Material mat)
+        {
+            for (int z = -38; z <= 38; z += 6)
+            {
+                GameObject dash = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                dash.name = "RoadDash";
+                dash.transform.SetParent(parent);
+                dash.transform.position = new Vector3(0f, 0.11f, z);
+                dash.transform.localScale = new Vector3(0.15f, 0.04f, 2.2f);
+                SetRendererMaterial(dash, mat);
+            }
+        }
+
+        private static void BuildTrees(Transform parent, Material trunk, Material leaves)
+        {
+            Vector3[] spots =
+            {
+                new Vector3(-8f, 0f, -20f), new Vector3(8f, 0f, -20f),
+                new Vector3(-8f, 0f, -5f), new Vector3(8f, 0f, -5f),
+                new Vector3(-8f, 0f, 10f), new Vector3(8f, 0f, 10f),
+                new Vector3(-8f, 0f, 25f), new Vector3(8f, 0f, 25f),
+                new Vector3(-32f, 0f, 34f), new Vector3(32f, 0f, 34f),
+                new Vector3(-32f, 0f, -34f), new Vector3(32f, 0f, -34f)
+            };
+            foreach (Vector3 spot in spots)
+            {
+                BuildTree(parent, spot, trunk, leaves);
+            }
+        }
+
+        private static void BuildTree(Transform parent, Vector3 pos, Material trunk, Material leaves)
+        {
+            float h = UnityEngine.Random.Range(2.6f, 3.4f);
+            GameObject trunkGO = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            trunkGO.name = "Tree_Trunk";
+            trunkGO.transform.SetParent(parent);
+            trunkGO.transform.position = new Vector3(pos.x, h * 0.5f, pos.z);
+            trunkGO.transform.localScale = new Vector3(0.45f, h * 0.5f, 0.45f);
+            SetRendererMaterial(trunkGO, trunk);
+
+            float leafScale = UnityEngine.Random.Range(2.6f, 3.4f);
+            GameObject foliage = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            foliage.name = "Tree_Leaves";
+            foliage.transform.SetParent(parent);
+            foliage.transform.position = new Vector3(pos.x, h + leafScale * 0.45f, pos.z);
+            foliage.transform.localScale = Vector3.one * leafScale;
+            SetRendererMaterial(foliage, leaves);
+        }
+
+        private static void BuildBushes(Transform parent, Material mat)
+        {
+            Vector3[] spots =
+            {
+                new Vector3(-5f, 0f, -2f), new Vector3(5f, 0f, -2f),
+                new Vector3(-5f, 0f, 16f), new Vector3(5f, 0f, 16f),
+                new Vector3(-18f, 0f, 10f), new Vector3(18f, 0f, 10f),
+                new Vector3(-25f, 0f, 30f), new Vector3(25f, 0f, 30f),
+                new Vector3(0f, 0f, -40f), new Vector3(0f, 0f, 40f)
+            };
+            foreach (Vector3 spot in spots)
+            {
+                GameObject bushGO = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                bushGO.name = "Bush";
+                bushGO.transform.SetParent(parent);
+                float s = UnityEngine.Random.Range(1.1f, 1.6f);
+                bushGO.transform.position = new Vector3(spot.x, s * 0.45f, spot.z);
+                bushGO.transform.localScale = new Vector3(s, s * 0.8f, s);
+                SetRendererMaterial(bushGO, mat);
+            }
+        }
+
+        private static void BuildRocks(Transform parent, Material mat)
+        {
+            Vector3[] spots =
+            {
+                new Vector3(-12f, 0f, 18f), new Vector3(14f, 0f, -18f),
+                new Vector3(-28f, 0f, -25f), new Vector3(30f, 0f, -28f),
+                new Vector3(2f, 0f, -8f), new Vector3(-2f, 0f, 20f)
+            };
+            foreach (Vector3 spot in spots)
+            {
+                GameObject rockGO = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                rockGO.name = "Rock";
+                rockGO.transform.SetParent(parent);
+                float s = UnityEngine.Random.Range(0.5f, 0.9f);
+                rockGO.transform.position = new Vector3(spot.x, s * 0.4f, spot.z);
+                rockGO.transform.localScale = new Vector3(s, s * 0.7f, s);
+                SetRendererMaterial(rockGO, mat);
+            }
+        }
+
+        private static void BuildFlowers(Transform parent, Material red, Material white)
+        {
+            Material[] mats = { red, white };
+            Vector3[] spots =
+            {
+                new Vector3(-7f, 0f, 12f), new Vector3(-6f, 0f, 13f), new Vector3(-8f, 0f, 14f),
+                new Vector3(6f, 0f, 13f), new Vector3(7f, 0f, 14f), new Vector3(8f, 0f, 12f),
+                new Vector3(22f, 0f, 22f), new Vector3(21f, 0f, 23f), new Vector3(23f, 0f, 25f),
+                new Vector3(-24f, 0f, 21f), new Vector3(-23f, 0f, 22f), new Vector3(-25f, 0f, 23f)
+            };
+            for (int i = 0; i < spots.Length; i++)
+            {
+                GameObject flowerGO = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                flowerGO.name = "Flower";
+                flowerGO.transform.SetParent(parent);
+                flowerGO.transform.position = spots[i] + Vector3.up * 0.12f;
+                flowerGO.transform.localScale = Vector3.one * 0.25f;
+                SetRendererMaterial(flowerGO, mats[i % mats.Length]);
+            }
+        }
+
+        private static void BuildLamps(Transform parent, Material pole, Material head)
+        {
+            int[] zs = { -20, -5, 10, 25 };
+            foreach (int z in zs)
+            {
+                BuildLamp(parent, new Vector3(-6.5f, 0f, z), pole, head);
+                BuildLamp(parent, new Vector3(6.5f, 0f, z), pole, head);
+            }
+        }
+
+        private static void BuildLamp(Transform parent, Vector3 pos, Material pole, Material head)
+        {
+            GameObject postGO = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            postGO.name = "Lamp_Post";
+            postGO.transform.SetParent(parent);
+            postGO.transform.position = new Vector3(pos.x, 2.6f, pos.z);
+            postGO.transform.localScale = new Vector3(0.18f, 2.6f, 0.18f);
+            SetRendererMaterial(postGO, pole);
+
+            GameObject lightGO = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            lightGO.name = "Lamp_Head";
+            lightGO.transform.SetParent(parent);
+            lightGO.transform.position = new Vector3(pos.x, 5.4f, pos.z);
+            lightGO.transform.localScale = new Vector3(0.55f, 0.4f, 0.55f);
+            SetRendererMaterial(lightGO, head);
+
+            GameObject lampLightGO = new GameObject("Lamp_Light");
+            lampLightGO.transform.SetParent(parent);
+            lampLightGO.transform.position = new Vector3(pos.x, 5.2f, pos.z);
+            Light lampLight = lampLightGO.AddComponent<Light>();
+            lampLight.type = LightType.Point;
+            lampLight.color = new Color(1f, 0.85f, 0.6f);
+            lampLight.range = 9f;
+            lampLight.intensity = 1.5f;
+            lampLight.shadows = LightShadows.None;
+        }
+
+        private static void BuildFences(Transform parent, Material mat)
+        {
+            BuildFence(parent, new Vector3(16f, 0f, 20f), new Vector3(16f, 0f, 28f), mat);
+            BuildFence(parent, new Vector3(-16f, 0f, 20f), new Vector3(-16f, 0f, 28f), mat);
+        }
+
+        private static void BuildFence(Transform parent, Vector3 start, Vector3 end, Material mat)
+        {
+            Vector3 dir = end - start;
+            float length = dir.magnitude;
+            Vector3 dirN = dir.normalized;
+
+            int posts = Mathf.Max(2, Mathf.RoundToInt(length) + 1);
+            for (int i = 0; i < posts; i++)
+            {
+                Vector3 p = start + dirN * (length * i / (posts - 1));
+                GameObject post = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                post.name = "Fence_Post";
+                post.transform.SetParent(parent);
+                post.transform.position = new Vector3(p.x, 0.65f, p.z);
+                post.transform.localScale = new Vector3(0.12f, 1.3f, 0.12f);
+                SetRendererMaterial(post, mat);
+            }
+
+            GameObject rail = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            rail.name = "Fence_Rail";
+            rail.transform.SetParent(parent);
+            rail.transform.position = new Vector3((start.x + end.x) * 0.5f, 1.05f, (start.z + end.z) * 0.5f);
+            rail.transform.localScale = new Vector3(0.1f, 0.12f, length);
+            rail.transform.rotation = Quaternion.LookRotation(dirN);
+            SetRendererMaterial(rail, mat);
         }
 
         private static Transform GetOrCreateEmpty(string name, Transform parent = null)
