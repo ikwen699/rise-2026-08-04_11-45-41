@@ -10,6 +10,9 @@ namespace Rise.SaveSystem
         public int money;
         public int day;
         public float hourOfDay;
+        public float energy = 100f;
+        public float hunger = 100f;
+        public int food;
     }
 
     public static class GameSave

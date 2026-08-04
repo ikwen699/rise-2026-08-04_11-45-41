@@ -31,6 +31,7 @@ namespace Rise.Core
         public Wallet Wallet { get; private set; }
         public TimeSystem Clock { get; private set; }
         public JobSystem Jobs { get; private set; }
+        public PlayerNeeds Needs { get; private set; }
         public ShopStand ActiveShop { get; set; }
 
         private readonly List<ShopStand> _shops = new List<ShopStand>();
@@ -63,8 +64,10 @@ namespace Rise.Core
             Wallet.SetMoney(startingMoney);
             Clock.Configure(secondsPerGameHour, startingDay, startingHour);
 
+            SaveData loaded = null;
             if (GameSave.TryLoad(out SaveData data))
             {
+                loaded = data;
                 Wallet.SetMoney(data.money);
                 Clock.Configure(secondsPerGameHour, data.day, data.hourOfDay);
             }
@@ -73,6 +76,11 @@ namespace Rise.Core
             FindSun();
             SetupWorkStations();
             SetupShops();
+
+            if (Needs != null && loaded != null)
+            {
+                Needs.ApplySaved(loaded.energy, loaded.hunger, loaded.food);
+            }
         }
 
         private void Update()
@@ -86,6 +94,17 @@ namespace Rise.Core
         {
             GameObject playerGO = GameObject.Find("Player");
             _player = playerGO != null ? playerGO.transform : null;
+
+            Needs = _player != null ? _player.GetComponent<PlayerNeeds>() : null;
+            if (Needs == null && _player != null)
+            {
+                Needs = _player.gameObject.AddComponent<PlayerNeeds>();
+            }
+            if (Needs != null)
+            {
+                Needs.Configure(this);
+                Needs.OnExhausted += HandleExhausted;
+            }
         }
 
         private void FindSun()
@@ -149,10 +168,24 @@ namespace Rise.Core
             if (Jobs.IsWorking)
             {
                 Jobs.StopWorking();
+                return;
             }
-            else
+
+            if (Needs != null && Needs.Energy <= 0f)
             {
-                Jobs.StartWorking(job, station);
+                Needs.ShowMessage("Too tired to work. Eat food to recover.");
+                return;
+            }
+
+            Jobs.StartWorking(job, station);
+        }
+
+        private void HandleExhausted()
+        {
+            if (Jobs.IsWorking)
+            {
+                Jobs.StopWorking();
+                Needs.ShowMessage("Too tired to work. Eat food to recover energy.");
             }
         }
 
@@ -162,7 +195,10 @@ namespace Rise.Core
             {
                 money = Wallet.Money,
                 day = Clock.Day,
-                hourOfDay = Clock.HourOfDay
+                hourOfDay = Clock.HourOfDay,
+                energy = Needs != null ? Needs.Energy : 100f,
+                hunger = Needs != null ? Needs.Hunger : 100f,
+                food = Needs != null ? Needs.FoodCount : 0
             });
         }
 

@@ -11,6 +11,7 @@ namespace Rise.Systems
     {
         public string itemName = "Item";
         public int price = 10;
+        public bool isFood;
     }
 
     public class ShopStand : MonoBehaviour
@@ -102,7 +103,15 @@ namespace Rise.Systems
             if (_gameManager.Wallet.CanAfford(item.price))
             {
                 _gameManager.Wallet.Spend(item.price);
-                SetMessage("Bought " + item.itemName + " for $" + item.price);
+                if (item.isFood && _gameManager.Needs != null)
+                {
+                    _gameManager.Needs.AddFood();
+                    SetMessage("Bought " + item.itemName + " x1  (press Q to eat)");
+                }
+                else
+                {
+                    SetMessage("Bought " + item.itemName + " for $" + item.price);
+                }
             }
             else
             {

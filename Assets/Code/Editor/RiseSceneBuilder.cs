@@ -246,6 +246,7 @@ namespace Rise.EditorTools
             GameManager gameManager = EnsureGameManager();
             JobDefinition job = EnsureJobDefinition();
             EnsureWorkStation(job);
+            EnsurePlayerNeeds();
             EnsureShop();
             EnsureHUD(gameManager);
 
@@ -310,11 +311,21 @@ namespace Rise.EditorTools
             ShopStand shop = stand.AddComponent<ShopStand>();
             shop.SetItems(new List<ShopItemData>
             {
-                new ShopItemData { itemName = "Bread", price = 5 },
+                new ShopItemData { itemName = "Bread", price = 5, isFood = true },
                 new ShopItemData { itemName = "Shirt", price = 25 },
                 new ShopItemData { itemName = "Shoes", price = 40 },
                 new ShopItemData { itemName = "Watch", price = 120 }
             });
+        }
+
+        private static void EnsurePlayerNeeds()
+        {
+            GameObject playerGO = GameObject.Find("Player");
+            if (playerGO == null) return;
+            if (playerGO.GetComponent<PlayerNeeds>() == null)
+            {
+                playerGO.AddComponent<PlayerNeeds>();
+            }
         }
 
         private static void EnsureHUD(GameManager gameManager)
@@ -335,10 +346,11 @@ namespace Rise.EditorTools
             Text day = CreateHudText("Day", canvasGO.transform, new Vector2(0.02f, 0.87f), new Vector2(0f, 1f), 44, TextAnchor.UpperLeft);
             Text time = CreateHudText("Time", canvasGO.transform, new Vector2(0.02f, 0.79f), new Vector2(0f, 1f), 44, TextAnchor.UpperLeft);
             Text work = CreateHudText("Work", canvasGO.transform, new Vector2(0.5f, 0.04f), new Vector2(0.5f, 0f), 34, TextAnchor.LowerCenter);
+            Text needs = CreateHudText("Needs", canvasGO.transform, new Vector2(0.02f, 0.71f), new Vector2(0f, 1f), 40, TextAnchor.UpperLeft);
             Text shop = CreateHudText("ShopMenu", canvasGO.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), 38, TextAnchor.MiddleCenter);
 
             GameHUD hud = canvasGO.AddComponent<GameHUD>();
-            hud.Configure(gameManager, money, time, day, work, shop);
+            hud.Configure(gameManager, money, time, day, work, needs, shop);
         }
 
         private static Text CreateHudText(string name, Transform parent, Vector2 anchor, Vector2 pivot, int size, TextAnchor align)
