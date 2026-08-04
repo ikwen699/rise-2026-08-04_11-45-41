@@ -298,17 +298,18 @@ namespace Rise.EditorTools
 
         private static void EnsureShop()
         {
-            ShopStand existing = Object.FindFirstObjectByType<ShopStand>();
-            if (existing != null) return;
+            ShopStand shop = Object.FindFirstObjectByType<ShopStand>();
+            if (shop == null)
+            {
+                GameObject stand = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                stand.name = "ShopStand";
+                stand.transform.position = new Vector3(0f, 0.6f, 26f);
+                stand.transform.localScale = new Vector3(2.5f, 1.2f, 2.5f);
+                Object.DestroyImmediate(stand.GetComponent<Collider>());
+                SetRendererMaterial(stand, CreateMaterial("M_ShopStand", new Color(0.6f, 0.25f, 0.8f)));
+                shop = stand.AddComponent<ShopStand>();
+            }
 
-            GameObject stand = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            stand.name = "ShopStand";
-            stand.transform.position = new Vector3(0f, 0.6f, 26f);
-            stand.transform.localScale = new Vector3(2.5f, 1.2f, 2.5f);
-            Object.DestroyImmediate(stand.GetComponent<Collider>());
-            SetRendererMaterial(stand, CreateMaterial("M_ShopStand", new Color(0.6f, 0.25f, 0.8f)));
-
-            ShopStand shop = stand.AddComponent<ShopStand>();
             shop.SetItems(new List<ShopItemData>
             {
                 new ShopItemData { itemName = "Bread", price = 5, isFood = true },

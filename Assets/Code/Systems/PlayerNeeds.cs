@@ -16,8 +16,7 @@ namespace Rise.Systems
         [SerializeField] private float hungerPerGameHour = 4f;
 
         [Header("Food")]
-        [SerializeField] private float foodHungerRestore = 35f;
-        [SerializeField] private float foodEnergyRestore = 25f;
+        [SerializeField] private float foodEnergyRestore = 30f;
 
         private Core.GameManager _gameManager;
         private string _message = "";
@@ -61,7 +60,7 @@ namespace Rise.Systems
         {
             if (FoodCount <= 0) return false;
             FoodCount--;
-            Hunger = Mathf.Min(maxHunger, Hunger + foodHungerRestore);
+            Hunger = maxHunger;
             Energy = Mathf.Min(maxEnergy, Energy + foodEnergyRestore);
             ShowMessage("Ate food. Feeling better!");
             return true;
