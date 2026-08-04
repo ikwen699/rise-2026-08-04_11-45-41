@@ -31,7 +31,7 @@ namespace Rise.Core
         [SerializeField] private bool lockCursorOnStart = true;
 
         [Header("State")]
-        [SerializeField, ReadOnly] private bool isGrounded;
+        [SerializeField] private bool isGrounded;
 
         private CharacterController _controller;
         private Vector2 _moveInput;
