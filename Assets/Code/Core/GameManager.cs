@@ -21,7 +21,7 @@ namespace Rise.Core
 
         [Header("Environment")]
         [SerializeField] private float nightIntensity = 0.05f;
-        [SerializeField] private float dayIntensity = 1f;
+        [SerializeField] private float dayIntensity = 1.35f;
 
         public event Action<int> OnMoneyChanged;
         public event Action<int> OnDayChanged;

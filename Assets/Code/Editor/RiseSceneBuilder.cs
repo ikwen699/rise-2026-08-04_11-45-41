@@ -19,6 +19,7 @@ namespace Rise.EditorTools
         private const string OpenWorldScenePath = "Assets/Scenes/OpenWorld/OpenWorld.unity";
         private const string InputAssetPath = "Assets/InputSystem_Actions.inputactions";
         private const string MaterialsFolder = "Assets/Art/Environment/Materials";
+        private const string TexturesFolder = "Assets/Art/Environment/Textures";
 
         private static string materialsFolder;
 
@@ -90,29 +91,29 @@ namespace Rise.EditorTools
             ground.transform.SetParent(world);
             ground.transform.position = new Vector3(0f, -0.5f, 0f);
             ground.transform.localScale = new Vector3(100f, 1f, 100f);
-            SetRendererMaterial(ground, CreateMaterial("M_Grass", new Color(0.45f, 0.62f, 0.34f)));
+            SetRendererMaterial(ground, CreateDetailedMaterial("M_Grass", new Color(0.5f, 0.68f, 0.35f), 0.06f, 0.1f));
 
             GameObject road = GameObject.CreatePrimitive(PrimitiveType.Cube);
             road.name = "MainRoad";
             road.transform.SetParent(world);
             road.transform.position = new Vector3(0f, 0.05f, 0f);
             road.transform.localScale = new Vector3(12f, 0.1f, 80f);
-            SetRendererMaterial(road, CreateMaterial("M_Road", new Color(0.30f, 0.30f, 0.32f)));
+            SetRendererMaterial(road, CreateDetailedMaterial("M_Road", new Color(0.32f, 0.32f, 0.34f), 0.05f, 0.2f));
 
             Transform town = GetOrCreateEmpty("Town", world);
 
-            Material houseA = CreateMaterial("M_HouseA", new Color(0.85f, 0.78f, 0.62f));
-            Material houseB = CreateMaterial("M_HouseB", new Color(0.62f, 0.50f, 0.38f));
-            Material shop = CreateMaterial("M_Shop", new Color(0.72f, 0.72f, 0.74f));
-            Material roof = CreateMaterial("M_Roof", new Color(0.45f, 0.20f, 0.14f));
+            Material houseA = CreateDetailedMaterial("M_HouseA", new Color(0.86f, 0.8f, 0.66f), 0.04f, 0.15f);
+            Material houseB = CreateDetailedMaterial("M_HouseB", new Color(0.62f, 0.5f, 0.38f), 0.06f, 0.15f);
+            Material shop = CreateDetailedMaterial("M_Shop", new Color(0.74f, 0.74f, 0.76f), 0.05f, 0.15f);
+            Material roof = CreateDetailedMaterial("M_Roof", new Color(0.5f, 0.22f, 0.15f), 0.08f, 0.25f);
 
-            BuildBuilding(town, "House_01", new Vector3(-16f, 0f, 12f), new Vector3(8f, 5f, 8f), houseA, roof);
-            BuildBuilding(town, "House_02", new Vector3(-16f, 0f, -12f), new Vector3(8f, 4f, 8f), houseB, roof);
-            BuildBuilding(town, "Shop_01", new Vector3(12f, 0f, 6f), new Vector3(7f, 3.5f, 9f), shop, roof);
-            BuildBuilding(town, "Shop_02", new Vector3(12f, 0f, -14f), new Vector3(7f, 3.5f, 9f), shop, roof);
-            BuildBuilding(town, "TownHall", new Vector3(0f, 0f, -30f), new Vector3(12f, 8f, 12f), houseA, roof);
-            BuildBuilding(town, "Market_01", new Vector3(20f, 0f, 24f), new Vector3(6f, 3f, 10f), houseB, roof);
-            BuildBuilding(town, "Market_02", new Vector3(-22f, 0f, 24f), new Vector3(6f, 3f, 10f), houseB, roof);
+            BuildBuilding(town, "House_01", new Vector3(-16f, 0f, 12f), new Vector3(12f, 6f, 12f), houseA, roof);
+            BuildBuilding(town, "House_02", new Vector3(-16f, 0f, -12f), new Vector3(11f, 5f, 11f), houseB, roof);
+            BuildBuilding(town, "Shop_01", new Vector3(12f, 0f, 6f), new Vector3(9f, 4f, 10f), shop, roof);
+            BuildBuilding(town, "Shop_02", new Vector3(12f, 0f, -14f), new Vector3(9f, 4f, 10f), shop, roof);
+            BuildBuilding(town, "TownHall", new Vector3(0f, 0f, -30f), new Vector3(14f, 10f, 14f), houseA, roof);
+            BuildBuilding(town, "Market_01", new Vector3(20f, 0f, 24f), new Vector3(7f, 3.5f, 11f), houseB, roof);
+            BuildBuilding(town, "Market_02", new Vector3(-22f, 0f, 24f), new Vector3(7f, 3.5f, 11f), houseB, roof);
         }
 
         private static void BuildBuilding(Transform parent, string name, Vector3 basePos, Vector3 baseSize, Material wallMat, Material roofMat)
@@ -124,12 +125,60 @@ namespace Rise.EditorTools
             body.transform.localScale = baseSize;
             SetRendererMaterial(body, wallMat);
 
-            GameObject roof = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            roof.name = name + "_Roof";
-            roof.transform.SetParent(parent);
-            roof.transform.position = basePos + Vector3.up * baseSize.y + Vector3.up * 0.6f;
-            roof.transform.localScale = new Vector3(baseSize.x + 0.8f, 1.2f, baseSize.z + 0.8f);
-            SetRendererMaterial(roof, roofMat);
+            BuildGableRoof(parent, name, basePos, baseSize, roofMat, name == "TownHall" ? 2.5f : 1.6f);
+
+            Material windowMat = CreateMaterial("M_Window", new Color(0.16f, 0.26f, 0.42f));
+            Material doorMat = CreateMaterial("M_Door", new Color(0.32f, 0.20f, 0.10f));
+            AddWindowsAndDoor(parent, name, basePos, baseSize, windowMat, doorMat);
+        }
+
+        private static void BuildGableRoof(Transform parent, string name, Vector3 basePos, Vector3 baseSize, Material mat, float rise)
+        {
+            float topY = basePos.y + baseSize.y;
+            float halfZ = baseSize.z * 0.5f + 0.3f;
+            float length = Mathf.Sqrt(halfZ * halfZ + rise * rise);
+            float angle = Mathf.Atan2(rise, halfZ) * Mathf.Rad2Deg;
+
+            for (int side = -1; side <= 1; side += 2)
+            {
+                GameObject panel = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                panel.name = name + "_RoofPanel";
+                panel.transform.SetParent(parent);
+                panel.transform.position = new Vector3(basePos.x, topY + rise * 0.5f, basePos.z + side * halfZ * 0.5f);
+                panel.transform.localScale = new Vector3(baseSize.x + 0.8f, 0.25f, length);
+                panel.transform.rotation = Quaternion.Euler(side * angle, 0f, 0f);
+                SetRendererMaterial(panel, mat);
+            }
+
+            GameObject ridge = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            ridge.name = name + "_RoofRidge";
+            ridge.transform.SetParent(parent);
+            ridge.transform.position = new Vector3(basePos.x, topY + rise, basePos.z);
+            ridge.transform.localScale = new Vector3(baseSize.x + 0.8f, 0.35f, 0.6f);
+            SetRendererMaterial(ridge, mat);
+        }
+
+        private static void AddWindowsAndDoor(Transform parent, string name, Vector3 basePos, Vector3 baseSize, Material windowMat, Material doorMat)
+        {
+            Vector3 half = baseSize * 0.5f;
+            float inset = 0.05f;
+            float winY = basePos.y + baseSize.y * 0.55f;
+            float winH = baseSize.y * 0.26f;
+            float winW = baseSize.x * 0.22f;
+            float sideW = baseSize.z * 0.22f;
+
+            for (int side = -1; side <= 1; side += 2)
+            {
+                float z = basePos.z + (side > 0 ? half.z + inset : -half.z - inset);
+                AddPrim(parent, name + "_Window", new Vector3(basePos.x - baseSize.x * 0.26f, winY, z), new Vector3(winW, winH, 0.15f), windowMat);
+                AddPrim(parent, name + "_Window", new Vector3(basePos.x + baseSize.x * 0.26f, winY, z), new Vector3(winW, winH, 0.15f), windowMat);
+                AddPrim(parent, name + "_WindowSide", new Vector3(basePos.x - half.x - inset, winY, basePos.z - baseSize.z * 0.2f), new Vector3(0.15f, winH, sideW), windowMat);
+                AddPrim(parent, name + "_WindowSide", new Vector3(basePos.x + half.x + inset, winY, basePos.z + baseSize.z * 0.2f), new Vector3(0.15f, winH, sideW), windowMat);
+            }
+
+            float doorW = Mathf.Min(1.8f, baseSize.x * 0.3f);
+            float doorH = Mathf.Min(3.4f, baseSize.y * 0.72f);
+            AddPrim(parent, name + "_Door", new Vector3(basePos.x, basePos.y + doorH * 0.5f, basePos.z + half.z + inset), new Vector3(doorW, doorH, 0.15f), doorMat);
         }
 
         private static void BuildPlayerRig()
@@ -230,14 +279,21 @@ namespace Rise.EditorTools
             sky.SetFloat("_Exposure", 1.15f);
             sky.SetFloat("_AtmosphereThickness", 1.05f);
             RenderSettings.skybox = sky;
-            RenderSettings.ambientLight = new Color(0.72f, 0.76f, 0.82f);
+            RenderSettings.ambientMode = AmbientMode.Trilight;
+            RenderSettings.ambientSkyColor = new Color(0.72f, 0.78f, 0.9f);
+            RenderSettings.ambientEquatorColor = new Color(0.62f, 0.63f, 0.64f);
+            RenderSettings.ambientGroundColor = new Color(0.5f, 0.48f, 0.44f);
             RenderSettings.fog = true;
             RenderSettings.fogColor = new Color(0.82f, 0.86f, 0.92f);
             RenderSettings.fogMode = FogMode.Exponential;
             RenderSettings.fogDensity = 0.008f;
 
             Light sun = Object.FindFirstObjectByType<Light>();
-            if (sun != null) sun.color = new Color(1f, 0.95f, 0.86f);
+            if (sun != null)
+            {
+                sun.color = new Color(1f, 0.95f, 0.86f);
+                sun.shadows = LightShadows.Soft;
+            }
         }
 
         private static void BuildTownDetails()
@@ -261,6 +317,7 @@ namespace Rise.EditorTools
             Material line = CreateMaterial("M_RoadLine", new Color(0.92f, 0.75f, 0.15f));
             Material flowerRed = CreateMaterial("M_FlowerRed", new Color(0.85f, 0.2f, 0.2f));
             Material flowerWhite = CreateMaterial("M_FlowerWhite", new Color(0.95f, 0.95f, 0.95f));
+            Material birdMat = CreateMaterial("M_Bird", new Color(0.09f, 0.09f, 0.12f));
 
             BuildRoadLines(details, line);
             BuildTrees(details, trunk, leaves);
@@ -269,11 +326,12 @@ namespace Rise.EditorTools
             BuildFlowers(details, flowerRed, flowerWhite);
             BuildLamps(details, lamp, lampHead);
             BuildFences(details, fence);
+            BuildBirds(details, birdMat);
         }
 
         private static void BuildRoadLines(Transform parent, Material mat)
         {
-            for (int z = -38; z <= 38; z += 6)
+            for (int z = -20; z <= 36; z += 6)
             {
                 GameObject dash = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 dash.name = "RoadDash";
@@ -293,31 +351,81 @@ namespace Rise.EditorTools
                 new Vector3(-8f, 0f, 10f), new Vector3(8f, 0f, 10f),
                 new Vector3(-8f, 0f, 25f), new Vector3(8f, 0f, 25f),
                 new Vector3(-32f, 0f, 34f), new Vector3(32f, 0f, 34f),
-                new Vector3(-32f, 0f, -34f), new Vector3(32f, 0f, -34f)
+                new Vector3(-32f, 0f, -34f), new Vector3(32f, 0f, -34f),
+                new Vector3(-32f, 0f, 0f), new Vector3(32f, 0f, 0f),
+                new Vector3(-18f, 0f, 38f), new Vector3(18f, 0f, 38f),
+                new Vector3(-18f, 0f, -38f), new Vector3(18f, 0f, -38f),
+                new Vector3(-28f, 0f, 12f), new Vector3(28f, 0f, 12f),
+                new Vector3(-28f, 0f, -12f), new Vector3(28f, 0f, -12f)
             };
             foreach (Vector3 spot in spots)
             {
+                if (IsNearBuilding(spot, 3f)) continue;
                 BuildTree(parent, spot, trunk, leaves);
             }
         }
 
+        private static bool IsNearBuilding(Vector3 pos, float margin)
+        {
+            Rect[] buildings =
+            {
+                new Rect(-16f - 6f - margin, 12f - 6f - margin, 12f + margin * 2f, 12f + margin * 2f),
+                new Rect(-16f - 5.5f - margin, -12f - 5.5f - margin, 11f + margin * 2f, 11f + margin * 2f),
+                new Rect(12f - 4.5f - margin, 6f - 5f - margin, 9f + margin * 2f, 10f + margin * 2f),
+                new Rect(12f - 4.5f - margin, -14f - 5f - margin, 9f + margin * 2f, 10f + margin * 2f),
+                new Rect(0f - 7f - margin, -30f - 7f - margin, 14f + margin * 2f, 14f + margin * 2f),
+                new Rect(20f - 3.5f - margin, 24f - 5.5f - margin, 7f + margin * 2f, 11f + margin * 2f),
+                new Rect(-22f - 3.5f - margin, 24f - 5.5f - margin, 7f + margin * 2f, 11f + margin * 2f)
+            };
+            foreach (Rect rect in buildings)
+            {
+                if (rect.Contains(pos)) return true;
+            }
+            return false;
+        }
+
         private static void BuildTree(Transform parent, Vector3 pos, Material trunk, Material leaves)
         {
-            float h = UnityEngine.Random.Range(2.6f, 3.4f);
+            float h = UnityEngine.Random.Range(3f, 4f);
             GameObject trunkGO = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             trunkGO.name = "Tree_Trunk";
             trunkGO.transform.SetParent(parent);
             trunkGO.transform.position = new Vector3(pos.x, h * 0.5f, pos.z);
-            trunkGO.transform.localScale = new Vector3(0.45f, h * 0.5f, 0.45f);
+            trunkGO.transform.localScale = new Vector3(0.55f, h * 0.5f, 0.55f);
             SetRendererMaterial(trunkGO, trunk);
 
-            float leafScale = UnityEngine.Random.Range(2.6f, 3.4f);
-            GameObject foliage = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            foliage.name = "Tree_Leaves";
-            foliage.transform.SetParent(parent);
-            foliage.transform.position = new Vector3(pos.x, h + leafScale * 0.45f, pos.z);
-            foliage.transform.localScale = Vector3.one * leafScale;
-            SetRendererMaterial(foliage, leaves);
+            float baseS = UnityEngine.Random.Range(2.6f, 3.2f);
+            float topY = h + baseS * 0.35f;
+
+            GameObject main = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            main.name = "Tree_Canopy";
+            main.transform.SetParent(parent);
+            main.transform.position = new Vector3(pos.x, topY, pos.z);
+            main.transform.localScale = Vector3.one * baseS;
+            SetRendererMaterial(main, leaves);
+
+            GameObject side1 = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            side1.name = "Tree_Canopy";
+            side1.transform.SetParent(parent);
+            side1.transform.position = new Vector3(pos.x - baseS * 0.45f, topY - baseS * 0.15f, pos.z + baseS * 0.15f);
+            side1.transform.localScale = Vector3.one * baseS * 0.75f;
+            SetRendererMaterial(side1, leaves);
+
+            GameObject side2 = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            side2.name = "Tree_Canopy";
+            side2.transform.SetParent(parent);
+            side2.transform.position = new Vector3(pos.x + baseS * 0.5f, topY - baseS * 0.1f, pos.z - baseS * 0.1f);
+            side2.transform.localScale = Vector3.one * baseS * 0.8f;
+            SetRendererMaterial(side2, leaves);
+        }
+
+        private static void BuildBirds(Transform parent, Material birdMat)
+        {
+            GameObject birdsGO = new GameObject("Birds");
+            birdsGO.transform.SetParent(parent);
+            birdsGO.transform.position = new Vector3(0f, 18f, 5f);
+            Birds birds = birdsGO.AddComponent<Birds>();
+            birds.material = birdMat;
         }
 
         private static void BuildBushes(Transform parent, Material mat)
@@ -482,8 +590,57 @@ namespace Rise.EditorTools
                 AssetDatabase.CreateAsset(mat, path);
             }
             mat.color = color;
+            mat.SetFloat("_Smoothness", 0.2f);
+            mat.SetFloat("_Metallic", 0f);
             EditorUtility.SetDirty(mat);
             return mat;
+        }
+
+        private static Texture2D CreateNoiseTexture(string name, float noise)
+        {
+            string path = TexturesFolder + "/" + name + ".png";
+            Texture2D tex = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            if (tex != null) return tex;
+
+            Directory.CreateDirectory(TexturesFolder);
+            tex = new Texture2D(256, 256, TextureFormat.RGB24, false);
+            tex.wrapMode = TextureWrapMode.Repeat;
+            tex.filterMode = FilterMode.Bilinear;
+
+            System.Random rng = new System.Random(777 + name.Length * 13);
+            for (int y = 0; y < tex.height; y++)
+            {
+                for (int x = 0; x < tex.width; x++)
+                {
+                    float v = 1f - noise + (float)rng.NextDouble() * 2f * noise;
+                    tex.SetPixel(x, y, new Color(v, v, v, 1f));
+                }
+            }
+            tex.Apply();
+            File.WriteAllBytes(path, tex.EncodeToPNG());
+            AssetDatabase.ImportAsset(path);
+            return tex;
+        }
+
+        private static Material CreateDetailedMaterial(string name, Color color, float noise, float smoothness)
+        {
+            Material mat = CreateMaterial(name, color);
+            mat.SetTexture("_BaseMap", CreateNoiseTexture(name + "_Noise", noise));
+            mat.SetFloat("_Smoothness", smoothness);
+            mat.SetFloat("_Metallic", 0f);
+            EditorUtility.SetDirty(mat);
+            return mat;
+        }
+
+        private static void AddPrim(Transform parent, string name, Vector3 pos, Vector3 scale, Material mat)
+        {
+            GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.name = name;
+            go.transform.SetParent(parent);
+            go.transform.position = pos;
+            go.transform.localScale = scale;
+            Object.DestroyImmediate(go.GetComponent<Collider>());
+            SetRendererMaterial(go, mat);
         }
 
         [MenuItem("Rise/Setup/Build Gameplay Systems")]
@@ -547,7 +704,7 @@ namespace Rise.EditorTools
 
             GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             marker.name = "WorkSpot_Shop";
-            marker.transform.position = new Vector3(12f, 0.25f, 11.5f);
+            marker.transform.position = new Vector3(12f, 0.25f, 14f);
             marker.transform.localScale = new Vector3(2.2f, 0.5f, 2.2f);
             Object.DestroyImmediate(marker.GetComponent<Collider>());
             SetRendererMaterial(marker, CreateMaterial("M_WorkSpot", new Color(1f, 0.8f, 0.1f)));
