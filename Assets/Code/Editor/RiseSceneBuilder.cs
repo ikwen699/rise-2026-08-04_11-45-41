@@ -755,7 +755,7 @@ namespace Rise.EditorTools
             if (existing != null) return;
 
             GameObject maya = new GameObject("Maya");
-            maya.transform.position = new Vector3(-12f, 0f, 19.5f);
+            maya.transform.position = new Vector3(3.5f, 0f, 26f);
 
             Material skin = CreateMaterial("M_Skin", new Color(0.93f, 0.82f, 0.72f));
             Material clothes = CreateMaterial("M_Clothes", new Color(0.85f, 0.4f, 0.45f));
