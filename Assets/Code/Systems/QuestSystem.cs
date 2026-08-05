@@ -10,6 +10,7 @@ namespace Rise.Systems
         private int _currentIndex;
         private int _currentProgress;
         private bool _initialized;
+        private bool _almostNotified;
 
         public int CurrentIndex => _currentIndex;
         public int CurrentProgress => _currentProgress;
@@ -69,6 +70,12 @@ namespace Rise.Systems
             int progress = current.GetProgress(_gameManager);
             _currentProgress = progress;
 
+            if (!_almostNotified && progress >= current.TargetValue * 0.8f && current.TargetValue > 1)
+            {
+                _almostNotified = true;
+                _gameManager.Phone?.Push("Almost There!", current.QuestName + " — " + current.GetProgressText(_gameManager));
+            }
+
             if (current.IsComplete(_gameManager))
             {
                 CompleteQuest();
@@ -90,6 +97,7 @@ namespace Rise.Systems
 
             _currentIndex++;
             _currentProgress = 0;
+            _almostNotified = false;
 
             if (_currentIndex < _quests.Length)
             {

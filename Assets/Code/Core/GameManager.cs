@@ -187,6 +187,7 @@ namespace Rise.Core
             UpdateSunlight();
             UpdateAudio();
             UpdatePropertyIncome();
+            UpdateStoryEvents();
         }
 
         private void FindPlayer()
@@ -433,6 +434,9 @@ namespace Rise.Core
         }
 
         private float _incomeAccumulator;
+        private int _lastMilestoneMoney;
+        private int _lastMilestoneRep;
+        private float _townEventTimer;
         private void UpdatePropertyIncome()
         {
             if (Properties == null || Clock == null) return;
@@ -442,6 +446,44 @@ namespace Rise.Core
             {
                 Properties.CollectIncome(_incomeAccumulator);
                 _incomeAccumulator = 0f;
+            }
+        }
+
+        private void UpdateStoryEvents()
+        {
+            if (Wallet == null || Phone == null) return;
+
+            int currentMoney = Wallet.Money;
+            int moneyK = currentMoney / 1000;
+            int lastK = _lastMilestoneMoney / 1000;
+            if (moneyK > lastK && moneyK > 0)
+            {
+                _lastMilestoneMoney = moneyK * 1000;
+                Phone.Push("Milestone!", "You've earned $" + _lastMilestoneMoney + " total. Keep rising.");
+            }
+
+            int currentRep = Rep != null ? Rep.Reputation : 0;
+            int[] repTiers = { 10, 30, 50, 80 };
+            foreach (int tier in repTiers)
+            {
+                if (currentRep >= tier && _lastMilestoneRep < tier)
+                {
+                    _lastMilestoneRep = tier;
+                    string[] tierNames = { "", "Known", "Respected", "Renowned", "Legendary" };
+                    string tierName = tier < tierNames.Length ? tierNames[tier] : "Elite";
+                    Phone.Push("Rep " + tier, "You're now " + tierName + " in town.");
+                }
+            }
+
+            _townEventTimer -= Time.deltaTime;
+            if (_townEventTimer <= 0f)
+            {
+                _townEventTimer = 360f;
+                int roll = Random.Range(0, 4);
+                if (roll == 0) Phone.Push("Town Event", "Market day! Visit the shops.");
+                else if (roll == 1) Phone.Push("Town Event", "Festival tonight! NPC goodwill is high.");
+                else if (roll == 2) Phone.Push("Town Event", "A new stranger arrived in town...");
+                else Phone.Push("Town Event", "Clear skies. Perfect day to work.");
             }
         }
 

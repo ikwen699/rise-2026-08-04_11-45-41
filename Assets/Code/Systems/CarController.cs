@@ -15,12 +15,14 @@ namespace Rise.Systems
         public string brandName = "Car";
         public Color brandColor = Color.white;
         public int minRep;
+        public AudioClip engineClip;
 
         private bool _isDriving;
         private float _currentSpeed;
         private Transform _player;
         private Core.GameManager _gameManager;
         private bool _playerInRange;
+        private AudioSource _engineSource;
 
         private static InputAction s_moveAction;
         private static InputAction s_brakeAction;
@@ -96,6 +98,8 @@ namespace Rise.Systems
             _currentSpeed = 0f;
             s_moveAction.Enable();
             s_brakeAction.Enable();
+            if (_gameManager.Audio != null)
+                _engineSource = _gameManager.Audio.CreateCarEngine(transform);
             Debug.Log("[CarController] Started driving " + brandName);
             _gameManager.EnterCar(this);
         }
@@ -104,6 +108,7 @@ namespace Rise.Systems
         {
             _isDriving = false;
             _currentSpeed = 0f;
+            StopEngine();
             if (s_moveAction != null) s_moveAction.Disable();
             if (s_brakeAction != null) s_brakeAction.Disable();
             Debug.Log("[CarController] Stopped driving " + brandName);
@@ -115,9 +120,20 @@ namespace Rise.Systems
             if (!_isDriving) return;
             _isDriving = false;
             _currentSpeed = 0f;
+            StopEngine();
             if (s_moveAction != null) s_moveAction.Disable();
             if (s_brakeAction != null) s_brakeAction.Disable();
             Debug.Log("[CarController] Force-stopped " + brandName);
+        }
+
+        private void StopEngine()
+        {
+            if (_engineSource != null)
+            {
+                _engineSource.Stop();
+                Destroy(_engineSource.gameObject);
+                _engineSource = null;
+            }
         }
 
         private void Drive()
@@ -141,10 +157,14 @@ namespace Rise.Systems
             float steer = input.x * turnSpeed * Time.deltaTime * Mathf.Clamp01(Mathf.Abs(_currentSpeed) / 3f);
             transform.Rotate(0f, steer, 0f);
             transform.Translate(0f, 0f, _currentSpeed * Time.deltaTime);
+
+            if (_gameManager.Audio != null)
+                _gameManager.Audio.UpdateCarEngine(_engineSource, Mathf.Abs(_currentSpeed), engineClip);
         }
 
         private void OnDestroy()
         {
+            StopEngine();
             if (s_moveAction != null) s_moveAction.Disable();
             if (s_brakeAction != null) s_brakeAction.Disable();
         }

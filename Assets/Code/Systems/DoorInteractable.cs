@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Rise.Core;
 
 namespace Rise.Systems
 {
