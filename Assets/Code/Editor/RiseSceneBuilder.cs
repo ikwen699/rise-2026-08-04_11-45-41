@@ -24,9 +24,23 @@ namespace Rise.EditorTools
 
         private static string materialsFolder;
 
+        private static bool BlockIfInPlayMode(string toolName)
+        {
+            if (EditorApplication.isPlaying)
+            {
+                EditorUtility.DisplayDialog(toolName,
+                    "You are in Play Mode. Press the Stop button (or Esc) to exit Play Mode first, then run this tool again.",
+                    "OK");
+                return true;
+            }
+            return false;
+        }
+
         [MenuItem("Rise/Setup/Build OpenWorld Scene")]
         public static void BuildOpenWorldScene()
         {
+            if (BlockIfInPlayMode("Build OpenWorld Scene")) return;
+
             Scene current = UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene();
             if (current.name != OpenWorldSceneName)
             {
@@ -58,6 +72,8 @@ namespace Rise.EditorTools
         [MenuItem("Rise/Setup/Rebuild Player")]
         public static void RebuildPlayer()
         {
+            if (BlockIfInPlayMode("Rebuild Player")) return;
+
             Scene current = EditorSceneManager.GetActiveScene();
             if (current.name != OpenWorldSceneName)
             {
@@ -80,6 +96,8 @@ namespace Rise.EditorTools
         [MenuItem("Rise/Setup/Build Environment Details")]
         public static void BuildEnvironmentDetails()
         {
+            if (BlockIfInPlayMode("Build Environment Details")) return;
+
             Scene current = UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene();
             if (current.name != OpenWorldSceneName)
             {
@@ -889,6 +907,8 @@ namespace Rise.EditorTools
         [MenuItem("Rise/Setup/Build Gameplay Systems")]
         public static void BuildGameplaySystems()
         {
+            if (BlockIfInPlayMode("Build Gameplay Systems")) return;
+
             Scene current = UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene();
             if (current.name != OpenWorldSceneName)
             {
@@ -925,6 +945,8 @@ namespace Rise.EditorTools
         [MenuItem("Rise/Setup/Build Cars")]
         public static void BuildCars()
         {
+            if (BlockIfInPlayMode("Build Cars")) return;
+
             Scene current = EditorSceneManager.GetActiveScene();
             if (current.name != OpenWorldSceneName)
             {
