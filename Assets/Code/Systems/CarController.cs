@@ -10,7 +10,7 @@ namespace Rise.Systems
         [SerializeField] private float turnSpeed = 90f;
         [SerializeField] private float brakeForce = 8f;
         [SerializeField] private float coastDrag = 2f;
-        [SerializeField] private float interactRadius = 3f;
+        [SerializeField] private float interactRadius = 4f;
 
         public string brandName = "Car";
         public Color brandColor = Color.white;
@@ -82,6 +82,7 @@ namespace Rise.Systems
             _currentSpeed = 0f;
             s_moveAction.Enable();
             s_brakeAction.Enable();
+            Debug.Log("[CarController] Started driving " + brandName);
             _gameManager.EnterCar(this);
         }
 
@@ -89,8 +90,9 @@ namespace Rise.Systems
         {
             _isDriving = false;
             _currentSpeed = 0f;
-            s_moveAction.Disable();
-            s_brakeAction.Disable();
+            if (s_moveAction != null) s_moveAction.Disable();
+            if (s_brakeAction != null) s_brakeAction.Disable();
+            Debug.Log("[CarController] Stopped driving " + brandName);
             _gameManager.ExitCar();
         }
 

@@ -434,36 +434,36 @@ namespace Rise.EditorTools
 
             BuildCitizen(npcs, "Citizen_1", new Vector3(0f, 0f, -16f), roadRoute,
                 skinTones[0], shirts[0], pants[0], hairs[0], heights[0], 1.2f,
-                "Old Thomas", new[] { "I've lived in this town for forty years.", "The market used to be twice this size.", "Come back when you're older, kid." }, "Marriage keeps you humble.");
+                "Old Thomas", new[] { "I've lived in this town for forty years.", "The market used to be twice this size.", "Come back when you're older, kid." }, "Marriage keeps you humble.", NPCBehavior.Guard);
 
             BuildCitizen(npcs, "Citizen_2", new Vector3(0f, 0f, 24f), roadRoute,
                 skinTones[1], shirts[1], pants[1], hairs[1], heights[1], 1.1f,
-                "Bella", new[] { "Welcome to town! Everything's better with a smile.", "Try the shop near the square, good prices.", "I hope you find what you're looking for." }, "Love makes every day brighter.");
+                "Bella", new[] { "Welcome to town! Everything's better with a smile.", "Try the shop near the square, good prices.", "I hope you find what you're looking for." }, "Love makes every day brighter.", NPCBehavior.Wander);
 
             BuildCitizen(npcs, "Citizen_3", new Vector3(-4f, 0f, 26f), shopRoute,
                 skinTones[2], shirts[2], pants[2], hairs[2], heights[2], 1.15f,
-                "Grocer Mark", new[] { "Fresh bread every morning, don't miss it.", "Business has been slow lately.", "Stop by and say hello sometime." }, "My wife runs the best bakery.");
+                "Grocer Mark", new[] { "Fresh bread every morning, don't miss it.", "Business has been slow lately.", "Stop by and say hello sometime." }, "My wife runs the best bakery.", NPCBehavior.Stand);
 
             BuildCitizen(npcs, "Citizen_4", new Vector3(4f, 0f, 26f), shopRoute,
                 skinTones[3], shirts[3], pants[3], hairs[3], heights[3], 0.95f,
-                "Lucy", new[] { "The flowers here are beautiful, aren't they?", "I work at the flower stand.", "A little kindness goes a long way." }, "My husband helps at the market.");
+                "Lucy", new[] { "The flowers here are beautiful, aren't they?", "I work at the flower stand.", "A little kindness goes a long way." }, "My husband helps at the market.", NPCBehavior.Wander);
 
             BuildCitizen(npcs, "Citizen_5", new Vector3(16f, 0f, 20f), marketEast,
                 skinTones[4], shirts[4], pants[4], hairs[4], heights[4], 1.2f,
-                "Farmer Joe", new[] { "I grow the best vegetables in the county.", "The soil here is rich and good.", "Work hard, eat well, sleep tight." }, "My wife brings me lunch every day.");
+                "Farmer Joe", new[] { "I grow the best vegetables in the county.", "The soil here is rich and good.", "Work hard, eat well, sleep tight." }, "My wife brings me lunch every day.", NPCBehavior.Stand);
 
             BuildCitizen(npcs, "Citizen_6", new Vector3(-16f, 0f, 20f), marketWest,
                 skinTones[5], shirts[5], pants[5], hairs[5], heights[5], 1.0f,
-                "Millie", new[] { "I teach the children at the schoolhouse.", "Education opens every door.", "Keep your chin up, things will improve." }, "My sweetheart brings me flowers.");
+                "Millie", new[] { "I teach the children at the schoolhouse.", "Education opens every door.", "Keep your chin up, things will improve." }, "My sweetheart brings me flowers.", NPCBehavior.Wander);
 
             BuildCitizen(npcs, "Citizen_7", new Vector3(0f, 0f, 32f), roadRoute,
                 skinTones[6], shirts[6], pants[6], hairs[6], heights[6], 1.1f,
-                "Sam", new[] { "The town hall is where you get your papers.", "I'm in charge of keeping the roads clean.", "It's a living, not much else to say.", "The mayor's a good man, listen to him.", "Stay out of trouble and you'll be fine." }, "My partner keeps me in line.");
+                "Sam", new[] { "The town hall is where you get your papers.", "I'm in charge of keeping the roads clean.", "It's a living, not much else to say.", "The mayor's a good man, listen to him.", "Stay out of trouble and you'll be fine." }, "My partner keeps me in line.", NPCBehavior.Route);
         }
 
         private static void BuildCitizen(Transform parent, string name, Vector3 start, Vector3[] route,
             Color skinColor, Color shirtColor, Color pantsColor, Color hairColor, float height, float walkSpeed,
-            string npcName, string[] lines, string marriedLine)
+            string npcName, string[] lines, string marriedLine, NPCBehavior behavior = NPCBehavior.Route)
         {
             BuildHumanoid(parent, name, start, skinColor, shirtColor, pantsColor, hairColor, height);
 
@@ -474,8 +474,10 @@ namespace Rise.EditorTools
             town.lines = lines;
             town.marriedLine = marriedLine;
             town.bodyTint = shirtColor;
-            town.SetRoute(route);
             town.walkSpeed = walkSpeed;
+            town.behavior = behavior;
+            if (behavior == NPCBehavior.Route)
+                town.SetRoute(route);
 
             CharacterController cc = npcGO.AddComponent<CharacterController>();
             cc.height = 2f * height;
@@ -1001,18 +1003,159 @@ namespace Rise.EditorTools
 
         private static void EnsureShop()
         {
-            ShopStand shop = Object.FindAnyObjectByType<ShopStand>();
-            if (shop == null)
+            ShopStand oldShop = Object.FindAnyObjectByType<ShopStand>();
+            if (oldShop != null)
             {
-                GameObject stand = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                stand.name = "ShopStand";
-                stand.transform.position = new Vector3(0f, 0.6f, 26f);
-                stand.transform.localScale = new Vector3(2.5f, 1.2f, 2.5f);
-                Object.DestroyImmediate(stand.GetComponent<Collider>());
-                SetRendererMaterial(stand, CreateMaterial("M_ShopStand", new Color(0.6f, 0.25f, 0.8f)));
-                shop = stand.AddComponent<ShopStand>();
+                Transform oldParent = oldShop.transform.parent;
+                if (oldParent != null && oldParent.name == "ShopBuilding") Object.DestroyImmediate(oldParent.gameObject);
+                else Object.DestroyImmediate(oldShop.gameObject);
             }
 
+            Transform world = GameObject.Find("World").transform;
+            Transform shopRoot = new GameObject("ShopBuilding").transform;
+            shopRoot.SetParent(world);
+            shopRoot.position = new Vector3(0f, 0f, 26f);
+
+            Material wallMat = CreateDetailedMaterial("M_ShopWall", new Color(0.92f, 0.88f, 0.82f), 0.04f, 0.15f);
+            Material roofMat = CreateMaterial("M_ShopRoof", new Color(0.55f, 0.25f, 0.15f));
+            Material floorMat = CreateDetailedMaterial("M_ShopFloor", new Color(0.45f, 0.35f, 0.25f), 0.06f, 0.3f);
+            Material counterMat = CreateMaterial("M_ShopCounter", new Color(0.4f, 0.25f, 0.12f));
+            Material signMat = CreateMaterial("M_ShopSign", new Color(0.2f, 0.6f, 0.3f));
+            Material windowMat = CreateMaterial("M_ShopWindow", new Color(0.6f, 0.8f, 0.9f, 0.5f));
+            Material doorMat = CreateMaterial("M_ShopDoor", new Color(0.35f, 0.2f, 0.1f));
+            Material awningMat = CreateMaterial("M_ShopAwning", new Color(0.85f, 0.3f, 0.2f));
+
+            float bw = 10f, bd = 8f, bh = 4f;
+
+            GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            floor.name = "ShopFloor";
+            floor.transform.SetParent(shopRoot);
+            floor.transform.localPosition = new Vector3(0f, 0.05f, 0f);
+            floor.transform.localScale = new Vector3(bw, 0.1f, bd);
+            SetRendererMaterial(floor, floorMat);
+
+            GameObject backWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            backWall.name = "ShopBackWall";
+            backWall.transform.SetParent(shopRoot);
+            backWall.transform.localPosition = new Vector3(0f, bh * 0.5f, -bd * 0.5f);
+            backWall.transform.localScale = new Vector3(bw, bh, 0.3f);
+            SetRendererMaterial(backWall, wallMat);
+
+            GameObject leftWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            leftWall.name = "ShopLeftWall";
+            leftWall.transform.SetParent(shopRoot);
+            leftWall.transform.localPosition = new Vector3(-bw * 0.5f, bh * 0.5f, 0f);
+            leftWall.transform.localScale = new Vector3(0.3f, bh, bd);
+            SetRendererMaterial(leftWall, wallMat);
+
+            GameObject rightWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            rightWall.name = "ShopRightWall";
+            rightWall.transform.SetParent(shopRoot);
+            rightWall.transform.localPosition = new Vector3(bw * 0.5f, bh * 0.5f, 0f);
+            rightWall.transform.localScale = new Vector3(0.3f, bh, bd);
+            SetRendererMaterial(rightWall, wallMat);
+
+            GameObject frontWallL = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            frontWallL.name = "ShopFrontWallL";
+            frontWallL.transform.SetParent(shopRoot);
+            frontWallL.transform.localPosition = new Vector3(-bw * 0.3f, bh * 0.5f, bd * 0.5f);
+            frontWallL.transform.localScale = new Vector3(bw * 0.35f, bh, 0.3f);
+            SetRendererMaterial(frontWallL, wallMat);
+
+            GameObject frontWallR = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            frontWallR.name = "ShopFrontWallR";
+            frontWallR.transform.SetParent(shopRoot);
+            frontWallR.transform.localPosition = new Vector3(bw * 0.3f, bh * 0.5f, bd * 0.5f);
+            frontWallR.transform.localScale = new Vector3(bw * 0.35f, bh, 0.3f);
+            SetRendererMaterial(frontWallR, wallMat);
+
+            GameObject winL = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            winL.name = "ShopWindowL";
+            winL.transform.SetParent(shopRoot);
+            winL.transform.localPosition = new Vector3(-bw * 0.3f, bh * 0.6f, bd * 0.5f);
+            winL.transform.localScale = new Vector3(1.5f, 1.8f, 0.1f);
+            SetRendererMaterial(winL, windowMat);
+
+            GameObject winR = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            winR.name = "ShopWindowR";
+            winR.transform.SetParent(shopRoot);
+            winR.transform.localPosition = new Vector3(bw * 0.3f, bh * 0.6f, bd * 0.5f);
+            winR.transform.localScale = new Vector3(1.5f, 1.8f, 0.1f);
+            SetRendererMaterial(winR, windowMat);
+
+            float doorW = 2.2f, doorH = 3.4f;
+            GameObject door = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            door.name = "ShopDoor";
+            door.transform.SetParent(shopRoot);
+            door.transform.localPosition = new Vector3(0f, doorH * 0.5f, bd * 0.5f);
+            door.transform.localScale = new Vector3(doorW, doorH, 0.15f);
+            SetRendererMaterial(door, doorMat);
+            Object.DestroyImmediate(door.GetComponent<Collider>());
+
+            float roofRise = 2f;
+            GameObject roofL = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            roofL.name = "ShopRoofL";
+            roofL.transform.SetParent(shopRoot);
+            roofL.transform.localPosition = new Vector3(0f, bh + roofRise * 0.5f, -bd * 0.25f);
+            float roofLen = Mathf.Sqrt(bd * 0.5f * bd * 0.5f + roofRise * roofRise);
+            float roofAngle = Mathf.Atan2(roofRise, bd * 0.5f) * Mathf.Rad2Deg;
+            roofL.transform.localScale = new Vector3(bw + 0.6f, 0.25f, roofLen);
+            roofL.transform.rotation = Quaternion.Euler(roofAngle, 0f, 0f);
+            SetRendererMaterial(roofL, roofMat);
+
+            GameObject roofR = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            roofR.name = "ShopRoofR";
+            roofR.transform.SetParent(shopRoot);
+            roofR.transform.localPosition = new Vector3(0f, bh + roofRise * 0.5f, bd * 0.25f);
+            roofR.transform.localScale = new Vector3(bw + 0.6f, 0.25f, roofLen);
+            roofR.transform.rotation = Quaternion.Euler(-roofAngle, 0f, 0f);
+            SetRendererMaterial(roofR, roofMat);
+
+            GameObject awning = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            awning.name = "ShopAwning";
+            awning.transform.SetParent(shopRoot);
+            awning.transform.localPosition = new Vector3(0f, bh - 0.3f, bd * 0.5f + 1f);
+            awning.transform.localScale = new Vector3(bw * 0.6f, 0.15f, 2f);
+            awning.transform.rotation = Quaternion.Euler(-15f, 0f, 0f);
+            SetRendererMaterial(awning, awningMat);
+
+            GameObject counter = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            counter.name = "ShopCounter";
+            counter.transform.SetParent(shopRoot);
+            counter.transform.localPosition = new Vector3(0f, 0.9f, -bd * 0.25f);
+            counter.transform.localScale = new Vector3(6f, 1f, 1.2f);
+            SetRendererMaterial(counter, counterMat);
+
+            GameObject sign = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            sign.name = "ShopSign";
+            sign.transform.SetParent(shopRoot);
+            sign.transform.localPosition = new Vector3(0f, bh + 0.8f, bd * 0.5f + 0.2f);
+            sign.transform.localScale = new Vector3(4f, 1.2f, 0.2f);
+            SetRendererMaterial(sign, signMat);
+
+            GameObject signText = new GameObject("SignLabel");
+            signText.transform.SetParent(shopRoot);
+            signText.transform.localPosition = new Vector3(0f, bh + 0.8f, bd * 0.5f + 0.35f);
+            Canvas signCanvas = signText.AddComponent<Canvas>();
+            signCanvas.renderMode = RenderMode.WorldSpace;
+            RectTransform signRT = signText.GetComponent<RectTransform>();
+            signRT.sizeDelta = new Vector2(4f, 1f);
+            signRT.localScale = Vector3.one * 0.08f;
+
+            GameObject signTextGO = new GameObject("Text");
+            signTextGO.transform.SetParent(signText.transform, false);
+            RectTransform stRT = signTextGO.AddComponent<RectTransform>();
+            stRT.anchorMin = Vector2.zero;
+            stRT.anchorMax = Vector2.one;
+            stRT.sizeDelta = Vector2.zero;
+            Text stLabel = signTextGO.AddComponent<Text>();
+            stLabel.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            stLabel.fontSize = 32;
+            stLabel.alignment = TextAnchor.MiddleCenter;
+            stLabel.color = Color.white;
+            stLabel.text = "General Store";
+
+            ShopStand shop = counter.AddComponent<ShopStand>();
             shop.SetItems(new List<ShopItemData>
             {
                 new ShopItemData { itemName = "Bread", price = 5, itemType = ShopItemType.Food },
@@ -1027,17 +1170,164 @@ namespace Rise.EditorTools
 
         private static void EnsureClothingShop()
         {
-            ClothingStand existing = Object.FindAnyObjectByType<ClothingStand>();
-            if (existing != null) return;
+            ClothingStand oldClothing = Object.FindAnyObjectByType<ClothingStand>();
+            if (oldClothing != null) Object.DestroyImmediate(oldClothing.gameObject);
 
-            GameObject stand = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            stand.name = "ClothingStand";
-            stand.transform.position = new Vector3(10f, 0.6f, -6f);
-            stand.transform.localScale = new Vector3(3f, 1.5f, 2f);
-            Object.DestroyImmediate(stand.GetComponent<Collider>());
-            SetRendererMaterial(stand, CreateMaterial("M_ClothingStand", new Color(0.85f, 0.82f, 0.78f)));
+            Transform world = GameObject.Find("World").transform;
+            Transform boutiqueRoot = new GameObject("BoutiqueBuilding").transform;
+            boutiqueRoot.SetParent(world);
+            boutiqueRoot.position = new Vector3(10f, 0f, -6f);
 
-            ClothingStand clothing = stand.AddComponent<ClothingStand>();
+            Material wallMat = CreateDetailedMaterial("M_BoutiqueWall", new Color(0.15f, 0.12f, 0.18f), 0.03f, 0.4f);
+            Material roofMat = CreateMaterial("M_BoutiqueRoof", new Color(0.1f, 0.1f, 0.12f));
+            Material floorMat = CreateDetailedMaterial("M_BoutiqueFloor", new Color(0.7f, 0.15f, 0.2f), 0.02f, 0.6f);
+            Material counterMat = CreateMaterial("M_BoutiqueCounter", new Color(0.85f, 0.82f, 0.78f));
+            Material signMat = CreateMaterial("M_BoutiqueSign", new Color(0.85f, 0.72f, 0.3f));
+            Material windowMat = CreateMaterial("M_BoutiqueWindow", new Color(0.6f, 0.7f, 0.9f, 0.4f));
+            Material doorMat = CreateMaterial("M_BoutiqueDoor", new Color(0.1f, 0.1f, 0.12f));
+            Material trimMat = CreateMaterial("M_BoutiqueTrim", new Color(0.85f, 0.72f, 0.3f));
+            Material displayMat = CreateMaterial("M_BoutiqueDisplay", new Color(0.9f, 0.15f, 0.2f));
+
+            float bw = 8f, bd = 7f, bh = 4.5f;
+
+            GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            floor.name = "BoutiqueFloor";
+            floor.transform.SetParent(boutiqueRoot);
+            floor.transform.localPosition = new Vector3(0f, 0.05f, 0f);
+            floor.transform.localScale = new Vector3(bw, 0.1f, bd);
+            SetRendererMaterial(floor, floorMat);
+
+            GameObject backWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            backWall.name = "BoutiqueBackWall";
+            backWall.transform.SetParent(boutiqueRoot);
+            backWall.transform.localPosition = new Vector3(0f, bh * 0.5f, -bd * 0.5f);
+            backWall.transform.localScale = new Vector3(bw, bh, 0.25f);
+            SetRendererMaterial(backWall, wallMat);
+
+            GameObject leftWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            leftWall.name = "BoutiqueLeftWall";
+            leftWall.transform.SetParent(boutiqueRoot);
+            leftWall.transform.localPosition = new Vector3(-bw * 0.5f, bh * 0.5f, 0f);
+            leftWall.transform.localScale = new Vector3(0.25f, bh, bd);
+            SetRendererMaterial(leftWall, wallMat);
+
+            GameObject rightWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            rightWall.name = "BoutiqueRightWall";
+            rightWall.transform.SetParent(boutiqueRoot);
+            rightWall.transform.localPosition = new Vector3(bw * 0.5f, bh * 0.5f, 0f);
+            rightWall.transform.localScale = new Vector3(0.25f, bh, bd);
+            SetRendererMaterial(rightWall, wallMat);
+
+            GameObject frontWallL = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            frontWallL.name = "BoutiqueFrontWallL";
+            frontWallL.transform.SetParent(boutiqueRoot);
+            frontWallL.transform.localPosition = new Vector3(-bw * 0.32f, bh * 0.5f, bd * 0.5f);
+            frontWallL.transform.localScale = new Vector3(bw * 0.3f, bh, 0.25f);
+            SetRendererMaterial(frontWallL, wallMat);
+
+            GameObject frontWallR = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            frontWallR.name = "BoutiqueFrontWallR";
+            frontWallR.transform.SetParent(boutiqueRoot);
+            frontWallR.transform.localPosition = new Vector3(bw * 0.32f, bh * 0.5f, bd * 0.5f);
+            frontWallR.transform.localScale = new Vector3(bw * 0.3f, bh, 0.25f);
+            SetRendererMaterial(frontWallR, wallMat);
+
+            GameObject winL = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            winL.name = "BoutiqueWindowL";
+            winL.transform.SetParent(boutiqueRoot);
+            winL.transform.localPosition = new Vector3(-bw * 0.32f, bh * 0.55f, bd * 0.5f);
+            winL.transform.localScale = new Vector3(1.6f, 2.2f, 0.08f);
+            SetRendererMaterial(winL, windowMat);
+
+            GameObject winR = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            winR.name = "BoutiqueWindowR";
+            winR.transform.SetParent(boutiqueRoot);
+            winR.transform.localPosition = new Vector3(bw * 0.32f, bh * 0.55f, bd * 0.5f);
+            winR.transform.localScale = new Vector3(1.6f, 2.2f, 0.08f);
+            SetRendererMaterial(winR, windowMat);
+
+            float doorW = 2f, doorH = 3.6f;
+            GameObject door = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            door.name = "BoutiqueDoor";
+            door.transform.SetParent(boutiqueRoot);
+            door.transform.localPosition = new Vector3(0f, doorH * 0.5f, bd * 0.5f);
+            door.transform.localScale = new Vector3(doorW, doorH, 0.15f);
+            SetRendererMaterial(door, doorMat);
+            Object.DestroyImmediate(door.GetComponent<Collider>());
+
+            float roofRise = 2.5f;
+            GameObject roofL = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            roofL.name = "BoutiqueRoofL";
+            roofL.transform.SetParent(boutiqueRoot);
+            roofL.transform.localPosition = new Vector3(0f, bh + roofRise * 0.5f, -bd * 0.25f);
+            float roofLen = Mathf.Sqrt(bd * 0.5f * bd * 0.5f + roofRise * roofRise);
+            float roofAngle = Mathf.Atan2(roofRise, bd * 0.5f) * Mathf.Rad2Deg;
+            roofL.transform.localScale = new Vector3(bw + 0.6f, 0.2f, roofLen);
+            roofL.transform.rotation = Quaternion.Euler(roofAngle, 0f, 0f);
+            SetRendererMaterial(roofL, roofMat);
+
+            GameObject roofR = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            roofR.name = "BoutiqueRoofR";
+            roofR.transform.SetParent(boutiqueRoot);
+            roofR.transform.localPosition = new Vector3(0f, bh + roofRise * 0.5f, bd * 0.25f);
+            roofR.transform.localScale = new Vector3(bw + 0.6f, 0.2f, roofLen);
+            roofR.transform.rotation = Quaternion.Euler(-roofAngle, 0f, 0f);
+            SetRendererMaterial(roofR, roofMat);
+
+            GameObject trim = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            trim.name = "BoutiqueTrim";
+            trim.transform.SetParent(boutiqueRoot);
+            trim.transform.localPosition = new Vector3(0f, bh + 0.1f, bd * 0.5f + 0.15f);
+            trim.transform.localScale = new Vector3(bw * 0.7f, 0.3f, 0.2f);
+            SetRendererMaterial(trim, trimMat);
+
+            GameObject counter = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            counter.name = "BoutiqueCounter";
+            counter.transform.SetParent(boutiqueRoot);
+            counter.transform.localPosition = new Vector3(0f, 0.85f, -bd * 0.2f);
+            counter.transform.localScale = new Vector3(5f, 0.9f, 1f);
+            SetRendererMaterial(counter, counterMat);
+
+            for (int i = -1; i <= 1; i++)
+            {
+                GameObject display = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                display.name = "BoutiqueDisplay_" + (i + 1);
+                display.transform.SetParent(boutiqueRoot);
+                display.transform.localPosition = new Vector3(i * 1.8f, 1.5f, -bd * 0.2f);
+                display.transform.localScale = new Vector3(1f, 1.8f, 0.6f);
+                SetRendererMaterial(display, displayMat);
+            }
+
+            GameObject sign = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            sign.name = "BoutiqueSign";
+            sign.transform.SetParent(boutiqueRoot);
+            sign.transform.localPosition = new Vector3(0f, bh + 0.8f, bd * 0.5f + 0.2f);
+            sign.transform.localScale = new Vector3(4.5f, 1.4f, 0.2f);
+            SetRendererMaterial(sign, signMat);
+
+            GameObject signText = new GameObject("SignLabel");
+            signText.transform.SetParent(boutiqueRoot);
+            signText.transform.localPosition = new Vector3(0f, bh + 0.8f, bd * 0.5f + 0.35f);
+            Canvas signCanvas = signText.AddComponent<Canvas>();
+            signCanvas.renderMode = RenderMode.WorldSpace;
+            RectTransform signRT = signText.GetComponent<RectTransform>();
+            signRT.sizeDelta = new Vector2(4.5f, 1.2f);
+            signRT.localScale = Vector3.one * 0.07f;
+
+            GameObject signTextGO = new GameObject("Text");
+            signTextGO.transform.SetParent(signText.transform, false);
+            RectTransform stRT = signTextGO.AddComponent<RectTransform>();
+            stRT.anchorMin = Vector2.zero;
+            stRT.anchorMax = Vector2.one;
+            stRT.sizeDelta = Vector2.zero;
+            Text stLabel = signTextGO.AddComponent<Text>();
+            stLabel.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            stLabel.fontSize = 30;
+            stLabel.alignment = TextAnchor.MiddleCenter;
+            stLabel.color = new Color(0.1f, 0.1f, 0.12f);
+            stLabel.text = "Merci Couture";
+
+            ClothingStand clothing = counter.AddComponent<ClothingStand>();
             clothing.SetItems(new ClothingItemData[]
             {
                 new ClothingItemData { itemName = "Streetwear", price = 0, outfitIndex = 0, minReputation = 0 },
@@ -1056,7 +1346,7 @@ namespace Rise.EditorTools
         private static void EnsurePartner()
         {
             Partner existing = Object.FindAnyObjectByType<Partner>();
-            if (existing != null) return;
+            if (existing != null) Object.DestroyImmediate(existing.gameObject);
 
             Transform mayaRoot = BuildHumanoid(null, "Maya", new Vector3(3.5f, 0f, 26f),
                 new Color(0.93f, 0.82f, 0.72f),
@@ -1064,6 +1354,11 @@ namespace Rise.EditorTools
                 new Color(0.30f, 0.20f, 0.18f),
                 new Color(0.20f, 0.12f, 0.08f),
                 0.95f);
+
+            CharacterController cc = mayaRoot.gameObject.AddComponent<CharacterController>();
+            cc.height = 1.9f;
+            cc.radius = 0.4f;
+            cc.center = new Vector3(0f, 0.95f, 0f);
 
             Partner partner = mayaRoot.gameObject.AddComponent<Partner>();
             partner.skinMaterial = CreateMaterial("M_Skin_Maya", new Color(0.93f, 0.82f, 0.72f));
@@ -1175,10 +1470,25 @@ namespace Rise.EditorTools
         private static void EnsureCar(Transform parent, string brand, Color color, int minRep, Vector3 position)
         {
             Material bodyMat = CreateMaterial("M_Car_" + brand, color);
-            Material glassMat = CreateMaterial("M_CarGlass", new Color(0.3f, 0.4f, 0.55f, 0.6f));
+            Material glassMat = CreateMaterial("M_CarGlass_" + brand, new Color(0.3f, 0.4f, 0.55f, 0.6f));
             Material wheelMat = CreateMaterial("M_CarWheel", new Color(0.12f, 0.12f, 0.12f));
             Material headlightMat = CreateMaterial("M_Headlight", new Color(1f, 0.95f, 0.7f));
             Material taillightMat = CreateMaterial("M_Taillight", new Color(0.8f, 0.1f, 0.1f));
+            Material chromeMat = CreateMaterial("M_CarChrome", new Color(0.8f, 0.82f, 0.85f));
+            Material darkMat = CreateMaterial("M_CarDark_" + brand, new Color(0.08f, 0.08f, 0.1f));
+            Material bumperMat = CreateMaterial("M_CarBumper_" + brand, Color.Lerp(color, Color.black, 0.15f));
+            Material tireMat = CreateMaterial("M_CarTire", new Color(0.06f, 0.06f, 0.06f));
+            Material rimMat = CreateMaterial("M_CarRim", new Color(0.75f, 0.77f, 0.8f));
+
+            bool isSUV = brand == "Range Rover";
+            bool isCoupe = brand == "Tesla" || brand == "Lexus";
+
+            float carW = isSUV ? 2f : 1.85f;
+            float carH = isSUV ? 0.9f : 0.65f;
+            float carL = isSUV ? 4.6f : (isCoupe ? 4.2f : 4.4f);
+            float cabinH = isSUV ? 0.75f : 0.55f;
+            float cabinL = isSUV ? 2.6f : (isCoupe ? 2.0f : 2.3f);
+            float rideH = isSUV ? 0.45f : 0.3f;
 
             GameObject car = new GameObject(brand);
             car.transform.SetParent(parent);
@@ -1187,23 +1497,117 @@ namespace Rise.EditorTools
             GameObject body = GameObject.CreatePrimitive(PrimitiveType.Cube);
             body.name = "Body";
             body.transform.SetParent(car.transform);
-            body.transform.localPosition = new Vector3(0f, 0.55f, 0f);
-            body.transform.localScale = new Vector3(1.8f, 0.7f, 4f);
+            body.transform.localPosition = new Vector3(0f, rideH + carH * 0.5f, 0f);
+            body.transform.localScale = new Vector3(carW, carH, carL);
             SetRendererMaterial(body, bodyMat);
             Object.DestroyImmediate(body.GetComponent<Collider>());
 
             GameObject cabin = GameObject.CreatePrimitive(PrimitiveType.Cube);
             cabin.name = "Cabin";
             cabin.transform.SetParent(car.transform);
-            cabin.transform.localPosition = new Vector3(0f, 1.05f, -0.2f);
-            cabin.transform.localScale = new Vector3(1.6f, 0.55f, 2f);
+            cabin.transform.localPosition = new Vector3(0f, rideH + carH + cabinH * 0.45f, -0.15f);
+            cabin.transform.localScale = new Vector3(carW - 0.15f, cabinH, cabinL);
             SetRendererMaterial(cabin, glassMat);
             Object.DestroyImmediate(cabin.GetComponent<Collider>());
 
+            float hoodFront = carL * 0.5f;
+            float trunkBack = -carL * 0.5f;
+            float bumperH = 0.2f;
+
+            GameObject frontBumper = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            frontBumper.name = "FrontBumper";
+            frontBumper.transform.SetParent(car.transform);
+            frontBumper.transform.localPosition = new Vector3(0f, rideH + bumperH * 0.5f + 0.05f, hoodFront + 0.08f);
+            frontBumper.transform.localScale = new Vector3(carW + 0.1f, bumperH + 0.1f, 0.15f);
+            SetRendererMaterial(frontBumper, bumperMat);
+            Object.DestroyImmediate(frontBumper.GetComponent<Collider>());
+
+            GameObject rearBumper = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            rearBumper.name = "RearBumper";
+            rearBumper.transform.SetParent(car.transform);
+            rearBumper.transform.localPosition = new Vector3(0f, rideH + bumperH * 0.5f + 0.05f, trunkBack - 0.08f);
+            rearBumper.transform.localScale = new Vector3(carW + 0.1f, bumperH + 0.1f, 0.15f);
+            SetRendererMaterial(rearBumper, bumperMat);
+            Object.DestroyImmediate(rearBumper.GetComponent<Collider>());
+
+            float grillW = carW * 0.65f;
+            GameObject grill = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            grill.name = "Grill";
+            grill.transform.SetParent(car.transform);
+            grill.transform.localPosition = new Vector3(0f, rideH + 0.15f, hoodFront + 0.12f);
+            grill.transform.localScale = new Vector3(grillW, 0.25f, 0.05f);
+            SetRendererMaterial(grill, darkMat);
+            Object.DestroyImmediate(grill.GetComponent<Collider>());
+
+            float windshieldAngle = isSUV ? 25f : 30f;
+            GameObject windshield = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            windshield.name = "Windshield";
+            windshield.transform.SetParent(car.transform);
+            windshield.transform.localPosition = new Vector3(0f, rideH + carH + cabinH * 0.5f + 0.1f, cabinL * 0.4f + 0.1f);
+            windshield.transform.localScale = new Vector3(carW - 0.2f, cabinH + 0.1f, 0.08f);
+            windshield.transform.localRotation = Quaternion.Euler(windshieldAngle, 0f, 0f);
+            SetRendererMaterial(windshield, glassMat);
+            Object.DestroyImmediate(windshield.GetComponent<Collider>());
+
+            GameObject rearWindow = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            rearWindow.name = "RearWindow";
+            rearWindow.transform.SetParent(car.transform);
+            rearWindow.transform.localPosition = new Vector3(0f, rideH + carH + cabinH * 0.5f + 0.1f, -cabinL * 0.4f - 0.1f);
+            rearWindow.transform.localScale = new Vector3(carW - 0.2f, cabinH + 0.1f, 0.08f);
+            rearWindow.transform.localRotation = Quaternion.Euler(-windshieldAngle, 0f, 0f);
+            SetRendererMaterial(rearWindow, glassMat);
+            Object.DestroyImmediate(rearWindow.GetComponent<Collider>());
+
+            float mirrorH = rideH + carH * 0.7f;
+            float mirrorOut = carW * 0.5f + 0.12f;
+            Vector3[] mirrorPos = { new Vector3(-mirrorOut, mirrorH, cabinL * 0.25f), new Vector3(mirrorOut, mirrorH, cabinL * 0.25f) };
+            foreach (Vector3 mp in mirrorPos)
+            {
+                GameObject mirror = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                mirror.name = "Mirror";
+                mirror.transform.SetParent(car.transform);
+                mirror.transform.localPosition = mp;
+                mirror.transform.localScale = new Vector3(0.15f, 0.12f, 0.1f);
+                SetRendererMaterial(mirror, darkMat);
+                Object.DestroyImmediate(mirror.GetComponent<Collider>());
+            }
+
+            Vector3[] hlPos = { new Vector3(-carW * 0.35f, rideH + 0.18f, hoodFront + 0.13f), new Vector3(carW * 0.35f, rideH + 0.18f, hoodFront + 0.13f) };
+            foreach (Vector3 hp in hlPos)
+            {
+                GameObject hl = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                hl.name = "Headlight";
+                hl.transform.SetParent(car.transform);
+                hl.transform.localPosition = hp;
+                hl.transform.localScale = new Vector3(0.35f, 0.18f, 0.06f);
+                SetRendererMaterial(hl, headlightMat);
+                Object.DestroyImmediate(hl.GetComponent<Collider>());
+            }
+
+            Vector3[] tlPos = { new Vector3(-carW * 0.35f, rideH + 0.18f, trunkBack - 0.13f), new Vector3(carW * 0.35f, rideH + 0.18f, trunkBack - 0.13f) };
+            foreach (Vector3 tp in tlPos)
+            {
+                GameObject tl = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                tl.name = "Taillight";
+                tl.transform.SetParent(car.transform);
+                tl.transform.localPosition = tp;
+                tl.transform.localScale = new Vector3(0.28f, 0.14f, 0.06f);
+                SetRendererMaterial(tl, taillightMat);
+                Object.DestroyImmediate(tl.GetComponent<Collider>());
+            }
+
+            float wheelW = isSUV ? 0.38f : 0.32f;
+            float wheelH = isSUV ? 0.18f : 0.14f;
+            float wheelR = isSUV ? 0.3f : 0.25f;
+            float fZ = carL * 0.32f;
+            float rZ = -carL * 0.32f;
+            float wheelY = rideH * 0.5f + wheelH;
             Vector3[] wheelPos =
             {
-                new Vector3(-0.9f, 0.25f, 1.2f), new Vector3(0.9f, 0.25f, 1.2f),
-                new Vector3(-0.9f, 0.25f, -1.2f), new Vector3(0.9f, 0.25f, -1.2f)
+                new Vector3(-carW * 0.5f - 0.02f, wheelY, fZ),
+                new Vector3(carW * 0.5f + 0.02f, wheelY, fZ),
+                new Vector3(-carW * 0.5f - 0.02f, wheelY, rZ),
+                new Vector3(carW * 0.5f + 0.02f, wheelY, rZ)
             };
             foreach (Vector3 wp in wheelPos)
             {
@@ -1211,43 +1615,66 @@ namespace Rise.EditorTools
                 wheel.name = "Wheel";
                 wheel.transform.SetParent(car.transform);
                 wheel.transform.localPosition = wp;
-                wheel.transform.localScale = new Vector3(0.4f, 0.15f, 0.4f);
+                wheel.transform.localScale = new Vector3(wheelW, wheelH, wheelW);
                 wheel.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
-                SetRendererMaterial(wheel, wheelMat);
+                SetRendererMaterial(wheel, tireMat);
                 Object.DestroyImmediate(wheel.GetComponent<Collider>());
+
+                GameObject rim = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                rim.name = "Rim";
+                rim.transform.SetParent(wheel.transform);
+                rim.transform.localPosition = Vector3.zero;
+                rim.transform.localScale = new Vector3(0.55f, 0.52f, 0.55f);
+                rim.transform.localRotation = Quaternion.identity;
+                SetRendererMaterial(rim, rimMat);
+                Object.DestroyImmediate(rim.GetComponent<Collider>());
             }
 
-            Vector3[] hlPos = { new Vector3(-0.6f, 0.55f, 2.02f), new Vector3(0.6f, 0.55f, 2.02f) };
-            foreach (Vector3 hp in hlPos)
+            float roofR = isSUV ? 0.08f : 0.05f;
+            GameObject roof = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            roof.name = "Roof";
+            roof.transform.SetParent(car.transform);
+            roof.transform.localPosition = new Vector3(0f, rideH + carH + cabinH + roofR * 0.5f, -0.15f);
+            roof.transform.localScale = new Vector3(carW - 0.2f, roofR, cabinL - 0.2f);
+            SetRendererMaterial(roof, bodyMat);
+            Object.DestroyImmediate(roof.GetComponent<Collider>());
+
+            if (!isSUV)
             {
-                GameObject hl = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                hl.name = "Headlight";
-                hl.transform.SetParent(car.transform);
-                hl.transform.localPosition = hp;
-                hl.transform.localScale = new Vector3(0.3f, 0.2f, 0.05f);
-                SetRendererMaterial(hl, headlightMat);
-                Object.DestroyImmediate(hl.GetComponent<Collider>());
+                float trunkH = 0.15f;
+                GameObject trunk = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                trunk.name = "Trunk";
+                trunk.transform.SetParent(car.transform);
+                trunk.transform.localPosition = new Vector3(0f, rideH + carH + trunkH * 0.3f, -cabinL * 0.5f - 0.3f);
+                trunk.transform.localScale = new Vector3(carW - 0.1f, trunkH, 0.4f);
+                SetRendererMaterial(trunk, bodyMat);
+                Object.DestroyImmediate(trunk.GetComponent<Collider>());
             }
 
-            Vector3[] tlPos = { new Vector3(-0.6f, 0.55f, -2.02f), new Vector3(0.6f, 0.55f, -2.02f) };
-            foreach (Vector3 tp in tlPos)
-            {
-                GameObject tl = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                tl.name = "Taillight";
-                tl.transform.SetParent(car.transform);
-                tl.transform.localPosition = tp;
-                tl.transform.localScale = new Vector3(0.25f, 0.15f, 0.05f);
-                SetRendererMaterial(tl, taillightMat);
-                Object.DestroyImmediate(tl.GetComponent<Collider>());
-            }
+            float plateW = 0.6f, plateH = 0.15f;
+            GameObject frontPlate = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            frontPlate.name = "FrontPlate";
+            frontPlate.transform.SetParent(car.transform);
+            frontPlate.transform.localPosition = new Vector3(0f, rideH + 0.15f, hoodFront + 0.14f);
+            frontPlate.transform.localScale = new Vector3(plateW, plateH, 0.02f);
+            SetRendererMaterial(frontPlate, CreateMaterial("M_Plate_" + brand, Color.white));
+            Object.DestroyImmediate(frontPlate.GetComponent<Collider>());
+
+            GameObject rearPlate = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            rearPlate.name = "RearPlate";
+            rearPlate.transform.SetParent(car.transform);
+            rearPlate.transform.localPosition = new Vector3(0f, rideH + 0.15f, trunkBack - 0.14f);
+            rearPlate.transform.localScale = new Vector3(plateW, plateH, 0.02f);
+            SetRendererMaterial(rearPlate, CreateMaterial("M_RearPlate_" + brand, Color.white));
+            Object.DestroyImmediate(rearPlate.GetComponent<Collider>());
 
             BoxCollider col = car.AddComponent<BoxCollider>();
-            col.size = new Vector3(2f, 1.2f, 4.2f);
-            col.center = new Vector3(0f, 0.6f, 0f);
+            col.size = new Vector3(carW + 0.2f, 1.2f, carL + 0.3f);
+            col.center = new Vector3(0f, rideH + carH * 0.5f, 0f);
 
             GameObject labelGO = new GameObject("BrandLabel");
             labelGO.transform.SetParent(car.transform);
-            labelGO.transform.localPosition = new Vector3(0f, 1.7f, 0f);
+            labelGO.transform.localPosition = new Vector3(0f, rideH + carH + cabinH + 0.3f, 0f);
             labelGO.transform.localRotation = Quaternion.identity;
 
             Canvas labelCanvas = labelGO.AddComponent<Canvas>();

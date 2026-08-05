@@ -3,6 +3,7 @@ using UnityEngine.InputSystem;
 
 namespace Rise.Systems
 {
+    public enum NPCBehavior { Route, Wander, Stand, Guard }
     public class TownNPC : MonoBehaviour
     {
         public Material bodyMaterial;
@@ -17,6 +18,9 @@ namespace Rise.Systems
         public float walkSpeed = 1.2f;
         [SerializeField] private float idleMin = 1f;
         [SerializeField] private float idleMax = 4f;
+        public NPCBehavior behavior = NPCBehavior.Route;
+        public float wanderRadius = 8f;
+        public float standLookInterval = 3f;
 
         private int _index;
         private float _idleTimer;
@@ -46,6 +50,8 @@ namespace Rise.Systems
 
         private CharacterController _cc;
         private WalkAnimation _walkAnim;
+        private Vector3 _wanderOrigin;
+        private float _standLookTimer;
 
         public bool IsOpen => _isOpen;
         public bool IsPlayerInRange => _playerInRange;
@@ -82,11 +88,17 @@ namespace Rise.Systems
             _outfitTimer = Random.Range(60f, _outfitInterval);
             _cc = GetComponent<CharacterController>();
             _walkAnim = GetComponent<WalkAnimation>();
+            _wanderOrigin = transform.position;
+            _standLookTimer = Random.Range(1f, standLookInterval);
 
-            if (waypoints.Length > 0)
+            if (behavior == NPCBehavior.Route && waypoints.Length > 0)
             {
                 _target = waypoints[0];
                 _index = 1;
+            }
+            else if (behavior == NPCBehavior.Wander)
+            {
+                _target = GetRandomWanderPoint();
             }
         }
 
@@ -130,6 +142,12 @@ namespace Rise.Systems
             if (_rightArmMat != null) _rightArmMat.color = shirt;
             if (_leftLegMat != null) _leftLegMat.color = pants;
             if (_rightLegMat != null) _rightLegMat.color = pants;
+        }
+
+        private Vector3 GetRandomWanderPoint()
+        {
+            Vector2 offset = Random.insideUnitCircle * wanderRadius;
+            return _wanderOrigin + new Vector3(offset.x, 0f, offset.y);
         }
 
         private Color GetPantsForShirt(Color shirt)
@@ -190,24 +208,54 @@ namespace Rise.Systems
 
             if (_isOpen) return;
 
-            if (waypoints == null || waypoints.Length == 0) return;
+            _outfitTimer -= Time.deltaTime;
+            if (_outfitTimer <= 0f)
+            {
+                ChangeOutfit();
+                _outfitTimer = Random.Range(60f, _outfitInterval);
+            }
+
+            if (behavior == NPCBehavior.Stand || behavior == NPCBehavior.Guard)
+            {
+                _standLookTimer -= Time.deltaTime;
+                if (_standLookTimer <= 0f)
+                {
+                    Vector3 lookDir = (behavior == NPCBehavior.Guard)
+                        ? (Vector3.forward * Random.Range(-1f, 1f) + Vector3.right * Random.Range(-1f, 1f)).normalized
+                        : new Vector3(Random.Range(-1f, 1f), 0f, Random.Range(-1f, 1f)).normalized;
+                    if (lookDir.sqrMagnitude > 0.01f)
+                        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(lookDir), 0.3f);
+                    _standLookTimer = Random.Range(1.5f, standLookInterval);
+                }
+                if (_walkAnim != null) _walkAnim.SetSpeed(0f);
+                return;
+            }
 
             if (_idling)
             {
                 _idleTimer -= Time.deltaTime;
-                if (_idleTimer <= 0f) _idling = false;
+                if (_idleTimer <= 0f)
+                {
+                    _idling = false;
+                    if (behavior == NPCBehavior.Wander)
+                        _target = GetRandomWanderPoint();
+                }
+                if (_walkAnim != null) _walkAnim.SetSpeed(0f);
                 return;
             }
 
             Vector3 to = _target - transform.position;
             to.y = 0f;
 
-            if (to.magnitude <= 0.2f)
+            if (to.magnitude <= 0.3f)
             {
                 _idling = true;
                 _idleTimer = Random.Range(idleMin, idleMax);
-                _target = waypoints[_index];
-                _index = (_index + 1) % waypoints.Length;
+                if (behavior == NPCBehavior.Route && waypoints.Length > 0)
+                {
+                    _target = waypoints[_index];
+                    _index = (_index + 1) % waypoints.Length;
+                }
                 return;
             }
 
@@ -219,15 +267,7 @@ namespace Rise.Systems
                 transform.rotation = Quaternion.LookRotation(to.normalized);
             }
 
-            bool moving = !_idling && !_isOpen && waypoints != null && waypoints.Length > 0;
-            if (_walkAnim != null) _walkAnim.SetSpeed(moving ? walkSpeed : 0f);
-
-            _outfitTimer -= Time.deltaTime;
-            if (_outfitTimer <= 0f)
-            {
-                ChangeOutfit();
-                _outfitTimer = Random.Range(60f, _outfitInterval);
-            }
+            if (_walkAnim != null) _walkAnim.SetSpeed(walkSpeed);
         }
 
         private void Open()
