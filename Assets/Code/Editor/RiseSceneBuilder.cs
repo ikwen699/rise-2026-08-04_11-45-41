@@ -134,22 +134,26 @@ namespace Rise.EditorTools
             ground.name = "Ground";
             ground.transform.SetParent(world);
             ground.transform.position = new Vector3(0f, -0.5f, 0f);
-            ground.transform.localScale = new Vector3(100f, 1f, 100f);
+            ground.transform.localScale = new Vector3(160f, 1f, 160f);
             SetRendererMaterial(ground, CreateDetailedMaterial("M_Grass", new Color(0.5f, 0.68f, 0.35f), 0.06f, 0.1f));
 
             GameObject road = GameObject.CreatePrimitive(PrimitiveType.Cube);
             road.name = "MainRoad";
             road.transform.SetParent(world);
             road.transform.position = new Vector3(0f, 0.05f, 0f);
-            road.transform.localScale = new Vector3(12f, 0.1f, 80f);
+            road.transform.localScale = new Vector3(12f, 0.1f, 120f);
             SetRendererMaterial(road, CreateDetailedMaterial("M_Road", new Color(0.32f, 0.32f, 0.34f), 0.05f, 0.2f));
 
             Transform town = GetOrCreateEmpty("Town", world);
 
             Material houseA = CreateDetailedMaterial("M_HouseA", new Color(0.86f, 0.8f, 0.66f), 0.04f, 0.15f);
             Material houseB = CreateDetailedMaterial("M_HouseB", new Color(0.62f, 0.5f, 0.38f), 0.06f, 0.15f);
+            Material houseC = CreateDetailedMaterial("M_HouseC", new Color(0.78f, 0.72f, 0.58f), 0.04f, 0.15f);
             Material shop = CreateDetailedMaterial("M_Shop", new Color(0.74f, 0.74f, 0.76f), 0.05f, 0.15f);
+            Material publicBldg = CreateDetailedMaterial("M_Public", new Color(0.82f, 0.80f, 0.78f), 0.03f, 0.2f);
+            Material churchMat = CreateDetailedMaterial("M_Church", new Color(0.88f, 0.85f, 0.82f), 0.02f, 0.25f);
             Material roof = CreateDetailedMaterial("M_Roof", new Color(0.5f, 0.22f, 0.15f), 0.08f, 0.25f);
+            Material roofDark = CreateDetailedMaterial("M_RoofDark", new Color(0.35f, 0.18f, 0.12f), 0.06f, 0.25f);
 
             BuildBuilding(town, "House_01", new Vector3(-16f, 0f, 12f), new Vector3(12f, 6f, 12f), houseA, roof);
             BuildBuilding(town, "House_02", new Vector3(-16f, 0f, -12f), new Vector3(11f, 5f, 11f), houseB, roof);
@@ -158,6 +162,57 @@ namespace Rise.EditorTools
             BuildBuilding(town, "TownHall", new Vector3(0f, 0f, -30f), new Vector3(14f, 10f, 14f), houseA, roof);
             BuildBuilding(town, "Market_01", new Vector3(20f, 0f, 24f), new Vector3(7f, 3.5f, 11f), houseB, roof);
             BuildBuilding(town, "Market_02", new Vector3(-22f, 0f, 24f), new Vector3(7f, 3.5f, 11f), houseB, roof);
+
+            GameObject crossA = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            crossA.name = "CrossRoad_A";
+            crossA.transform.SetParent(world);
+            crossA.transform.position = new Vector3(0f, 0.04f, 24f);
+            crossA.transform.localScale = new Vector3(120f, 0.1f, 10f);
+            SetRendererMaterial(crossA, road.GetComponent<Renderer>().sharedMaterial);
+
+            GameObject crossB = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            crossB.name = "CrossRoad_B";
+            crossB.transform.SetParent(world);
+            crossB.transform.position = new Vector3(0f, 0.04f, -24f);
+            crossB.transform.localScale = new Vector3(120f, 0.1f, 10f);
+            SetRendererMaterial(crossB, road.GetComponent<Renderer>().sharedMaterial);
+
+            BuildBuilding(town, "Church", new Vector3(0f, 0f, 42f), new Vector3(12f, 14f, 12f), churchMat, roofDark);
+            Material steepleMat = CreateDetailedMaterial("M_Steeple", new Color(0.75f, 0.72f, 0.68f), 0.02f, 0.3f);
+            GameObject steeple = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            steeple.name = "Church_Steeple";
+            steeple.transform.SetParent(town);
+            steeple.transform.position = new Vector3(0f, 20f, 38f);
+            steeple.transform.localScale = new Vector3(3f, 6f, 3f);
+            SetRendererMaterial(steeple, steepleMat);
+            Object.DestroyImmediate(steeple.GetComponent<Collider>());
+            GameObject spire = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            spire.name = "Church_Spire";
+            spire.transform.SetParent(town);
+            spire.transform.position = new Vector3(0f, 25f, 38f);
+            spire.transform.localScale = new Vector3(1.2f, 3f, 1.2f);
+            SetRendererMaterial(spire, roofDark);
+            Object.DestroyImmediate(spire.GetComponent<Collider>());
+
+            BuildBuilding(town, "School", new Vector3(-36f, 0f, 32f), new Vector3(14f, 7f, 12f), publicBldg, roof);
+            BuildBuilding(town, "Bakery", new Vector3(-22f, 0f, 36f), new Vector3(8f, 4f, 9f), shop, roof);
+            BuildBuilding(town, "Bank", new Vector3(22f, 0f, 36f), new Vector3(10f, 5f, 10f), publicBldg, roof);
+            BuildBuilding(town, "House_03", new Vector3(36f, 0f, 32f), new Vector3(10f, 5f, 10f), houseC, roof);
+            BuildBuilding(town, "House_04", new Vector3(16f, 0f, 46f), new Vector3(10f, 5f, 10f), houseA, roofDark);
+            BuildBuilding(town, "House_05", new Vector3(-16f, 0f, 46f), new Vector3(10f, 5f, 10f), houseB, roof);
+            BuildBuilding(town, "Restaurant", new Vector3(22f, 0f, -36f), new Vector3(9f, 5f, 10f), shop, roofDark);
+            BuildBuilding(town, "PostOffice", new Vector3(-22f, 0f, -36f), new Vector3(10f, 5f, 10f), publicBldg, roof);
+            BuildBuilding(town, "House_06", new Vector3(16f, 0f, -46f), new Vector3(10f, 5f, 10f), houseA, roof);
+            BuildBuilding(town, "House_07", new Vector3(-16f, 0f, -46f), new Vector3(10f, 5f, 10f), houseC, roofDark);
+
+            Material parkGrass = CreateDetailedMaterial("M_ParkGrass", new Color(0.40f, 0.65f, 0.30f), 0.08f, 0.05f);
+            GameObject park = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            park.name = "Park_Ground";
+            park.transform.SetParent(town);
+            park.transform.position = new Vector3(0f, 0.03f, 58f);
+            park.transform.localScale = new Vector3(24f, 0.06f, 16f);
+            SetRendererMaterial(park, parkGrass);
+            Object.DestroyImmediate(park.GetComponent<Collider>());
         }
 
         private static void BuildBuilding(Transform parent, string name, Vector3 basePos, Vector3 baseSize, Material wallMat, Material roofMat)
@@ -487,7 +542,10 @@ namespace Rise.EditorTools
                 new Color(0.88f, 0.76f, 0.64f), new Color(0.80f, 0.68f, 0.55f),
                 new Color(0.92f, 0.80f, 0.68f), new Color(0.75f, 0.60f, 0.48f),
                 new Color(0.85f, 0.72f, 0.58f), new Color(0.90f, 0.78f, 0.66f),
-                new Color(0.82f, 0.70f, 0.56f)
+                new Color(0.82f, 0.70f, 0.56f),
+                new Color(0.86f, 0.74f, 0.62f), new Color(0.78f, 0.64f, 0.52f),
+                new Color(0.84f, 0.72f, 0.60f), new Color(0.91f, 0.80f, 0.70f),
+                new Color(0.76f, 0.62f, 0.50f), new Color(0.83f, 0.71f, 0.59f)
             };
 
             Color[] shirts =
@@ -495,7 +553,10 @@ namespace Rise.EditorTools
                 new Color(0.85f, 0.40f, 0.45f), new Color(0.35f, 0.55f, 0.85f),
                 new Color(0.40f, 0.70f, 0.45f), new Color(0.85f, 0.75f, 0.30f),
                 new Color(0.60f, 0.45f, 0.75f), new Color(0.20f, 0.60f, 0.65f),
-                new Color(0.75f, 0.30f, 0.30f)
+                new Color(0.75f, 0.30f, 0.30f),
+                new Color(0.30f, 0.50f, 0.35f), new Color(0.70f, 0.25f, 0.45f),
+                new Color(0.45f, 0.55f, 0.70f), new Color(0.80f, 0.50f, 0.30f),
+                new Color(0.25f, 0.40f, 0.60f), new Color(0.55f, 0.65f, 0.40f)
             };
 
             Color[] pants =
@@ -503,7 +564,10 @@ namespace Rise.EditorTools
                 new Color(0.25f, 0.22f, 0.18f), new Color(0.20f, 0.20f, 0.30f),
                 new Color(0.35f, 0.30f, 0.25f), new Color(0.15f, 0.15f, 0.18f),
                 new Color(0.30f, 0.25f, 0.20f), new Color(0.18f, 0.22f, 0.35f),
-                new Color(0.22f, 0.18f, 0.15f)
+                new Color(0.22f, 0.18f, 0.15f),
+                new Color(0.28f, 0.24f, 0.20f), new Color(0.18f, 0.18f, 0.22f),
+                new Color(0.32f, 0.28f, 0.22f), new Color(0.20f, 0.20f, 0.25f),
+                new Color(0.25f, 0.20f, 0.18f), new Color(0.15f, 0.15f, 0.20f)
             };
 
             Color[] hairs =
@@ -511,12 +575,16 @@ namespace Rise.EditorTools
                 new Color(0.40f, 0.30f, 0.18f), new Color(0.60f, 0.40f, 0.20f),
                 new Color(0.15f, 0.10f, 0.06f), new Color(0.70f, 0.50f, 0.25f),
                 new Color(0.30f, 0.20f, 0.10f), new Color(0.50f, 0.35f, 0.18f),
-                new Color(0.20f, 0.15f, 0.08f)
+                new Color(0.20f, 0.15f, 0.08f),
+                new Color(0.45f, 0.32f, 0.16f), new Color(0.55f, 0.38f, 0.20f),
+                new Color(0.10f, 0.08f, 0.05f), new Color(0.65f, 0.45f, 0.22f),
+                new Color(0.35f, 0.25f, 0.12f), new Color(0.25f, 0.18f, 0.10f)
             };
 
             float[] heights =
             {
-                0.95f, 1.0f, 1.05f, 0.90f, 1.10f, 0.95f, 1.0f
+                0.95f, 1.0f, 1.05f, 0.90f, 1.10f, 0.95f, 1.0f,
+                0.92f, 1.08f, 0.98f, 1.02f, 0.96f, 1.05f
             };
 
             Vector3[] roadRoute =
@@ -542,6 +610,32 @@ namespace Rise.EditorTools
             {
                 new Vector3(-24f, 0f, 20f), new Vector3(-16f, 0f, 28f),
                 new Vector3(-16f, 0f, 20f), new Vector3(-24f, 0f, 28f)
+            };
+
+            Vector3[] crossNorth =
+            {
+                new Vector3(-36f, 0f, 24f), new Vector3(-10f, 0f, 24f),
+                new Vector3(10f, 0f, 24f), new Vector3(36f, 0f, 24f)
+            };
+
+            Vector3[] crossSouth =
+            {
+                new Vector3(-36f, 0f, -24f), new Vector3(-10f, 0f, -24f),
+                new Vector3(10f, 0f, -24f), new Vector3(36f, 0f, -24f)
+            };
+
+            Vector3[] northLoop =
+            {
+                new Vector3(-20f, 0f, 38f), new Vector3(0f, 0f, 38f),
+                new Vector3(20f, 0f, 38f), new Vector3(20f, 0f, 48f),
+                new Vector3(0f, 0f, 48f), new Vector3(-20f, 0f, 48f)
+            };
+
+            Vector3[] southLoop =
+            {
+                new Vector3(-20f, 0f, -38f), new Vector3(0f, 0f, -38f),
+                new Vector3(20f, 0f, -38f), new Vector3(20f, 0f, -48f),
+                new Vector3(0f, 0f, -48f), new Vector3(-20f, 0f, -48f)
             };
 
             BuildCitizen(npcs, "Citizen_1", new Vector3(0f, 0f, -16f), roadRoute,
@@ -571,6 +665,30 @@ namespace Rise.EditorTools
             BuildCitizen(npcs, "Citizen_7", new Vector3(0f, 0f, 32f), roadRoute,
                 skinTones[6], shirts[6], pants[6], hairs[6], heights[6], 1.1f,
                 "Sam", new[] { "The town hall is where you get your papers.", "I'm in charge of keeping the roads clean.", "It's a living, not much else to say.", "The mayor's a good man, listen to him.", "Stay out of trouble and you'll be fine." }, "My partner keeps me in line.", NPCBehavior.Route);
+
+            BuildCitizen(npcs, "Citizen_8", new Vector3(0f, 0f, 42f), northLoop,
+                skinTones[7], shirts[7], pants[7], hairs[7], heights[7], 0.9f,
+                "Pastor John", new[] { "The church welcomes all.", "Prayer and community keep us strong.", "Visit the school when you have time." }, "My wife plays the organ beautifully.", NPCBehavior.Stand);
+
+            BuildCitizen(npcs, "Citizen_9", new Vector3(-36f, 0f, 32f), crossNorth,
+                skinTones[8], shirts[8], pants[8], hairs[8], heights[8], 1.15f,
+                "Miss Elena", new[] { "I teach at the new school.", "Children are the future of this town.", "Education is the greatest gift.", "The library is open after class." }, "My partner supports all my dreams.", NPCBehavior.Stand);
+
+            BuildCitizen(npcs, "Citizen_10", new Vector3(-22f, 0f, 36f), crossNorth,
+                skinTones[9], shirts[9], pants[9], hairs[9], heights[9], 1.0f,
+                "Baker Rosa", new[] { "Fresh pastries every morning at dawn.", "The secret is in the flour.", "Come try the cinnamon rolls!", "Business is better than ever." }, "My sweetheart helps knead the dough.", NPCBehavior.Stand);
+
+            BuildCitizen(npcs, "Citizen_11", new Vector3(22f, 0f, 36f), crossSouth,
+                skinTones[10], shirts[10], pants[10], hairs[10], heights[10], 1.05f,
+                "Mr. Carter", new[] { "The bank is open from nine to five.", "Save your money wisely.", "Good credit opens every door.", "We have plans for every budget." }, "My wife handles all our finances.", NPCBehavior.Wander);
+
+            BuildCitizen(npcs, "Citizen_12", new Vector3(22f, 0f, -36f), southLoop,
+                skinTones[11], shirts[11], pants[11], hairs[11], heights[11], 1.0f,
+                "Chef Marco", new[] { "The best food in town, guaranteed.", "I learned to cook in the city.", "Try the special today.", "Every dish tells a story." }, "My partner taste-tests everything.", NPCBehavior.Stand);
+
+            BuildCitizen(npcs, "Citizen_13", new Vector3(-22f, 0f, -36f), southLoop,
+                skinTones[12], shirts[12], pants[12], hairs[12], heights[12], 1.1f,
+                "Officer Dan", new[] { "The post office is always here for you.", "Letters connect people far and wide.", "I walk this route rain or shine.", "Every delivery matters.", "The town keeps growing, keeps me busy." }, "My partner waits for me at home.", NPCBehavior.Route);
         }
 
         private static void BuildCitizen(Transform parent, string name, Vector3 start, Vector3[] route,
@@ -601,7 +719,7 @@ namespace Rise.EditorTools
 
         private static void BuildRoadLines(Transform parent, Material mat)
         {
-            for (int z = -20; z <= 36; z += 6)
+            for (int z = -56; z <= 56; z += 6)
             {
                 GameObject dash = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 dash.name = "RoadDash";
@@ -609,6 +727,22 @@ namespace Rise.EditorTools
                 dash.transform.position = new Vector3(0f, 0.11f, z);
                 dash.transform.localScale = new Vector3(0.15f, 0.04f, 2.2f);
                 SetRendererMaterial(dash, mat);
+            }
+            for (int x = -56; x <= 56; x += 6)
+            {
+                GameObject dashA = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                dashA.name = "CrossDash_A";
+                dashA.transform.SetParent(parent);
+                dashA.transform.position = new Vector3(x, 0.10f, 24f);
+                dashA.transform.localScale = new Vector3(2.2f, 0.04f, 0.15f);
+                SetRendererMaterial(dashA, mat);
+
+                GameObject dashB = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                dashB.name = "CrossDash_B";
+                dashB.transform.SetParent(parent);
+                dashB.transform.position = new Vector3(x, 0.10f, -24f);
+                dashB.transform.localScale = new Vector3(2.2f, 0.04f, 0.15f);
+                SetRendererMaterial(dashB, mat);
             }
         }
 
@@ -626,7 +760,19 @@ namespace Rise.EditorTools
                 new Vector3(-18f, 0f, 38f), new Vector3(18f, 0f, 38f),
                 new Vector3(-18f, 0f, -38f), new Vector3(18f, 0f, -38f),
                 new Vector3(-28f, 0f, 12f), new Vector3(28f, 0f, 12f),
-                new Vector3(-28f, 0f, -12f), new Vector3(28f, 0f, -12f)
+                new Vector3(-28f, 0f, -12f), new Vector3(28f, 0f, -12f),
+                new Vector3(-8f, 0f, -52f), new Vector3(8f, 0f, -52f),
+                new Vector3(-8f, 0f, 52f), new Vector3(8f, 0f, 52f),
+                new Vector3(-40f, 0f, 42f), new Vector3(40f, 0f, 42f),
+                new Vector3(-40f, 0f, -42f), new Vector3(40f, 0f, -42f),
+                new Vector3(-50f, 0f, 20f), new Vector3(50f, 0f, 20f),
+                new Vector3(-50f, 0f, -20f), new Vector3(50f, 0f, -20f),
+                new Vector3(-50f, 0f, 50f), new Vector3(50f, 0f, 50f),
+                new Vector3(-50f, 0f, -50f), new Vector3(50f, 0f, -50f),
+                new Vector3(-10f, 0f, 54f), new Vector3(10f, 0f, 54f),
+                new Vector3(-10f, 0f, 62f), new Vector3(10f, 0f, 62f),
+                new Vector3(-30f, 0f, 54f), new Vector3(30f, 0f, 54f),
+                new Vector3(-30f, 0f, -54f), new Vector3(30f, 0f, -54f)
             };
             foreach (Vector3 spot in spots)
             {
@@ -645,7 +791,18 @@ namespace Rise.EditorTools
                 new Rect(12f - 4.5f - margin, -14f - 5f - margin, 9f + margin * 2f, 10f + margin * 2f),
                 new Rect(0f - 7f - margin, -30f - 7f - margin, 14f + margin * 2f, 14f + margin * 2f),
                 new Rect(20f - 3.5f - margin, 24f - 5.5f - margin, 7f + margin * 2f, 11f + margin * 2f),
-                new Rect(-22f - 3.5f - margin, 24f - 5.5f - margin, 7f + margin * 2f, 11f + margin * 2f)
+                new Rect(-22f - 3.5f - margin, 24f - 5.5f - margin, 7f + margin * 2f, 11f + margin * 2f),
+                new Rect(0f - 6f - margin, 42f - 6f - margin, 12f + margin * 2f, 12f + margin * 2f),
+                new Rect(-36f - 7f - margin, 32f - 6f - margin, 14f + margin * 2f, 12f + margin * 2f),
+                new Rect(-22f - 4f - margin, 36f - 4.5f - margin, 8f + margin * 2f, 9f + margin * 2f),
+                new Rect(22f - 5f - margin, 36f - 5f - margin, 10f + margin * 2f, 10f + margin * 2f),
+                new Rect(36f - 5f - margin, 32f - 5f - margin, 10f + margin * 2f, 10f + margin * 2f),
+                new Rect(16f - 5f - margin, 46f - 5f - margin, 10f + margin * 2f, 10f + margin * 2f),
+                new Rect(-16f - 5f - margin, 46f - 5f - margin, 10f + margin * 2f, 10f + margin * 2f),
+                new Rect(22f - 4.5f - margin, -36f - 5f - margin, 9f + margin * 2f, 10f + margin * 2f),
+                new Rect(-22f - 5f - margin, -36f - 5f - margin, 10f + margin * 2f, 10f + margin * 2f),
+                new Rect(16f - 5f - margin, -46f - 5f - margin, 10f + margin * 2f, 10f + margin * 2f),
+                new Rect(-16f - 5f - margin, -46f - 5f - margin, 10f + margin * 2f, 10f + margin * 2f)
             };
             foreach (Rect rect in buildings)
             {
@@ -706,7 +863,13 @@ namespace Rise.EditorTools
                 new Vector3(-5f, 0f, 16f), new Vector3(5f, 0f, 16f),
                 new Vector3(-18f, 0f, 10f), new Vector3(18f, 0f, 10f),
                 new Vector3(-25f, 0f, 30f), new Vector3(25f, 0f, 30f),
-                new Vector3(0f, 0f, -40f), new Vector3(0f, 0f, 40f)
+                new Vector3(0f, 0f, -40f), new Vector3(0f, 0f, 40f),
+                new Vector3(-30f, 0f, 28f), new Vector3(30f, 0f, 28f),
+                new Vector3(-30f, 0f, -28f), new Vector3(30f, 0f, -28f),
+                new Vector3(-45f, 0f, 40f), new Vector3(45f, 0f, 40f),
+                new Vector3(-45f, 0f, -40f), new Vector3(45f, 0f, -40f),
+                new Vector3(-10f, 0f, 50f), new Vector3(10f, 0f, 50f),
+                new Vector3(-10f, 0f, -50f), new Vector3(10f, 0f, -50f)
             };
             foreach (Vector3 spot in spots)
             {
@@ -726,7 +889,10 @@ namespace Rise.EditorTools
             {
                 new Vector3(-12f, 0f, 18f), new Vector3(14f, 0f, -18f),
                 new Vector3(-28f, 0f, -25f), new Vector3(30f, 0f, -28f),
-                new Vector3(2f, 0f, -8f), new Vector3(-2f, 0f, 20f)
+                new Vector3(2f, 0f, -8f), new Vector3(-2f, 0f, 20f),
+                new Vector3(-48f, 0f, 50f), new Vector3(48f, 0f, 50f),
+                new Vector3(-48f, 0f, -50f), new Vector3(48f, 0f, -50f),
+                new Vector3(-40f, 0f, -10f), new Vector3(40f, 0f, -10f)
             };
             foreach (Vector3 spot in spots)
             {
@@ -748,7 +914,10 @@ namespace Rise.EditorTools
                 new Vector3(-7f, 0f, 12f), new Vector3(-6f, 0f, 13f), new Vector3(-8f, 0f, 14f),
                 new Vector3(6f, 0f, 13f), new Vector3(7f, 0f, 14f), new Vector3(8f, 0f, 12f),
                 new Vector3(22f, 0f, 22f), new Vector3(21f, 0f, 23f), new Vector3(23f, 0f, 25f),
-                new Vector3(-24f, 0f, 21f), new Vector3(-23f, 0f, 22f), new Vector3(-25f, 0f, 23f)
+                new Vector3(-24f, 0f, 21f), new Vector3(-23f, 0f, 22f), new Vector3(-25f, 0f, 23f),
+                new Vector3(-8f, 0f, 50f), new Vector3(8f, 0f, 50f), new Vector3(0f, 0f, 52f),
+                new Vector3(-40f, 0f, 28f), new Vector3(40f, 0f, 28f),
+                new Vector3(-40f, 0f, -28f), new Vector3(40f, 0f, -28f)
             };
             for (int i = 0; i < spots.Length; i++)
             {
@@ -763,11 +932,19 @@ namespace Rise.EditorTools
 
         private static void BuildLamps(Transform parent, Material pole, Material head)
         {
-            int[] zs = { -20, -5, 10, 25 };
+            int[] zs = { -52, -36, -20, -5, 10, 25, 38, 52 };
             foreach (int z in zs)
             {
                 BuildLamp(parent, new Vector3(-6.5f, 0f, z), pole, head);
                 BuildLamp(parent, new Vector3(6.5f, 0f, z), pole, head);
+            }
+            int[] crossXs = { -40, -20, 20, 40 };
+            foreach (int x in crossXs)
+            {
+                BuildLamp(parent, new Vector3(x, 0f, 19f), pole, head);
+                BuildLamp(parent, new Vector3(x, 0f, 29f), pole, head);
+                BuildLamp(parent, new Vector3(x, 0f, -19f), pole, head);
+                BuildLamp(parent, new Vector3(x, 0f, -29f), pole, head);
             }
         }
 
@@ -802,6 +979,10 @@ namespace Rise.EditorTools
         {
             BuildFence(parent, new Vector3(16f, 0f, 20f), new Vector3(16f, 0f, 28f), mat);
             BuildFence(parent, new Vector3(-16f, 0f, 20f), new Vector3(-16f, 0f, 28f), mat);
+            BuildFence(parent, new Vector3(42f, 0f, 28f), new Vector3(42f, 0f, 36f), mat);
+            BuildFence(parent, new Vector3(-42f, 0f, 28f), new Vector3(-42f, 0f, 36f), mat);
+            BuildFence(parent, new Vector3(12f, 0f, -42f), new Vector3(12f, 0f, -50f), mat);
+            BuildFence(parent, new Vector3(-12f, 0f, -42f), new Vector3(-12f, 0f, -50f), mat);
         }
 
         private static void BuildFence(Transform parent, Vector3 start, Vector3 end, Material mat)
