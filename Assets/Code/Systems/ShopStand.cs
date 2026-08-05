@@ -116,7 +116,8 @@ namespace Rise.Systems
                 {
                     case ShopItemType.Food:
                         _gameManager.Needs.AddFood();
-                        SetMessage("Bought " + item.itemName + " — Food x" + _gameManager.Needs.FoodCount + "  (press Q to eat)");
+                        Debug.Log("Food bought! FoodCount = " + _gameManager.Needs.FoodCount);
+                        SetMessage("Bought " + item.itemName + "  Food x" + _gameManager.Needs.FoodCount + "  (press Q to eat)");
                         break;
                     case ShopItemType.GiftFlower:
                         _gameManager.Needs.AddGift(ShopItemType.GiftFlower);
