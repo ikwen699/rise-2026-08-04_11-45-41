@@ -12,8 +12,12 @@ namespace Rise.Core
         private Transform _player;
         private GameManager _gameManager;
         private bool _wasPressed;
+        private Renderer _renderer;
+        private bool _lastUnlocked = true;
 
         public JobDefinition Job => job;
+        public bool IsPlayerInRange { get; private set; }
+        public bool IsUnlocked => _gameManager != null && _gameManager.Jobs != null && _gameManager.Jobs.IsUnlocked(job);
 
         public void Configure(Transform player, GameManager gameManager)
         {
@@ -26,11 +30,21 @@ namespace Rise.Core
             job = definition;
         }
 
+        private void Start()
+        {
+            _renderer = GetComponent<Renderer>();
+            if (_renderer != null)
+            {
+                _renderer.material = new Material(_renderer.sharedMaterial);
+            }
+        }
+
         private void Update()
         {
             if (_gameManager == null || _player == null || job == null) return;
 
             bool inRange = Vector3.Distance(transform.position, _player.position) <= interactRadius;
+            IsPlayerInRange = inRange;
 
             if (_gameManager.Jobs.IsWorking && _gameManager.Jobs.CurrentStation == this && !inRange)
             {
@@ -43,6 +57,18 @@ namespace Rise.Core
                 !_gameManager.Jobs.IsWorking)
             {
                 _gameManager.ToggleWork(job, this);
+            }
+
+            if (_renderer != null)
+            {
+                bool unlocked = IsUnlocked;
+                if (unlocked != _lastUnlocked)
+                {
+                    _lastUnlocked = unlocked;
+                    _renderer.material.color = unlocked
+                        ? new Color(1f, 0.8f, 0.1f)
+                        : new Color(0.45f, 0.45f, 0.48f);
+                }
             }
         }
 

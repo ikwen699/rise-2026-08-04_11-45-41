@@ -57,6 +57,7 @@ namespace Rise.UI
             {
                 string line = needs.NeedsText;
                 if (gameManager.Partner != null) line += "   " + gameManager.Partner.StatusText;
+                line += "   Earned $" + gameManager.Jobs.TotalEarned;
                 SetText(needsText, line);
             }
 
@@ -94,6 +95,10 @@ namespace Rise.UI
             {
                 hint = "Press E to talk to Maya";
             }
+            else if (TryGetLockedStation(out WorkStation locked))
+            {
+                hint = "Locked: earn $" + locked.Job.UnlockEarned + " total to work as " + locked.Job.JobName;
+            }
             else if (IsNearAnyShop())
             {
                 hint = "Press E to shop";
@@ -110,6 +115,21 @@ namespace Rise.UI
             for (int i = 0; i < gameManager.ShopCount; i++)
             {
                 if (gameManager.GetShop(i).IsPlayerInRange) return true;
+            }
+            return false;
+        }
+
+        private bool TryGetLockedStation(out WorkStation locked)
+        {
+            locked = null;
+            for (int i = 0; i < gameManager.StationCount; i++)
+            {
+                WorkStation station = gameManager.GetStation(i);
+                if (station.IsPlayerInRange && !station.IsUnlocked)
+                {
+                    locked = station;
+                    return true;
+                }
             }
             return false;
         }

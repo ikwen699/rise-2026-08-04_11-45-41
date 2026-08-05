@@ -20,6 +20,7 @@ namespace Rise.SaveSystem
         public bool married;
         public int marriageDay;
         public bool childSpawned;
+        public int totalEarned;
     }
 
     public static class GameSave

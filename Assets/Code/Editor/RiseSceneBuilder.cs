@@ -322,6 +322,7 @@ namespace Rise.EditorTools
             Material flowerRed = CreateMaterial("M_FlowerRed", new Color(0.85f, 0.2f, 0.2f));
             Material flowerWhite = CreateMaterial("M_FlowerWhite", new Color(0.95f, 0.95f, 0.95f));
             Material birdMat = CreateMaterial("M_Bird", new Color(0.09f, 0.09f, 0.12f));
+            Material skin = CreateMaterial("M_Skin", new Color(0.93f, 0.82f, 0.72f));
 
             BuildRoadLines(details, line);
             BuildTrees(details, trunk, leaves);
@@ -331,6 +332,89 @@ namespace Rise.EditorTools
             BuildLamps(details, lamp, lampHead);
             BuildFences(details, fence);
             BuildBirds(details, birdMat);
+            BuildTownspeople(details, skin);
+        }
+
+        private static void BuildTownspeople(Transform parent, Material skin)
+        {
+            Transform npcs = new GameObject("Townspeople").transform;
+            npcs.SetParent(parent);
+
+            Material body = CreateMaterial("M_CitizenBody", new Color(0.6f, 0.6f, 0.6f));
+
+            Color[] shirts =
+            {
+                new Color(0.85f, 0.40f, 0.45f),
+                new Color(0.35f, 0.55f, 0.85f),
+                new Color(0.40f, 0.70f, 0.45f),
+                new Color(0.85f, 0.75f, 0.30f),
+                new Color(0.60f, 0.45f, 0.75f),
+                new Color(0.20f, 0.60f, 0.65f),
+                new Color(0.75f, 0.30f, 0.30f)
+            };
+
+            Vector3[] roadRoute =
+            {
+                new Vector3(0f, 0f, -16f), new Vector3(0f, 0f, -8f), new Vector3(0f, 0f, 0f),
+                new Vector3(0f, 0f, 8f), new Vector3(0f, 0f, 16f), new Vector3(0f, 0f, 24f),
+                new Vector3(0f, 0f, 32f)
+            };
+
+            Vector3[] shopRoute =
+            {
+                new Vector3(-4f, 0f, 26f), new Vector3(4f, 0f, 26f),
+                new Vector3(0f, 0f, 30f), new Vector3(0f, 0f, 22f)
+            };
+
+            Vector3[] marketEast =
+            {
+                new Vector3(24f, 0f, 20f), new Vector3(16f, 0f, 28f),
+                new Vector3(16f, 0f, 20f), new Vector3(24f, 0f, 28f)
+            };
+
+            Vector3[] marketWest =
+            {
+                new Vector3(-24f, 0f, 20f), new Vector3(-16f, 0f, 28f),
+                new Vector3(-16f, 0f, 20f), new Vector3(-24f, 0f, 28f)
+            };
+
+            BuildCitizen(npcs, "Citizen_1", new Vector3(0f, 0f, -16f), roadRoute, body, skin, shirts[0]);
+            BuildCitizen(npcs, "Citizen_2", new Vector3(0f, 0f, 24f), roadRoute, body, skin, shirts[1]);
+            BuildCitizen(npcs, "Citizen_3", new Vector3(-4f, 0f, 26f), shopRoute, body, skin, shirts[2]);
+            BuildCitizen(npcs, "Citizen_4", new Vector3(4f, 0f, 26f), shopRoute, body, skin, shirts[3]);
+            BuildCitizen(npcs, "Citizen_5", new Vector3(16f, 0f, 20f), marketEast, body, skin, shirts[4]);
+            BuildCitizen(npcs, "Citizen_6", new Vector3(-16f, 0f, 20f), marketWest, body, skin, shirts[5]);
+            BuildCitizen(npcs, "Citizen_7", new Vector3(0f, 0f, 32f), roadRoute, body, skin, shirts[6]);
+        }
+
+        private static void BuildCitizen(Transform parent, string name, Vector3 start, Vector3[] route,
+            Material bodyMat, Material skinMat, Color tint)
+        {
+            GameObject npc = new GameObject(name);
+            npc.transform.SetParent(parent);
+            npc.transform.position = start;
+
+            GameObject body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            body.name = "Body";
+            body.transform.SetParent(npc.transform);
+            body.transform.localPosition = new Vector3(0f, 0.9f, 0f);
+            body.transform.localScale = new Vector3(0.55f, 0.9f, 0.55f);
+            Object.DestroyImmediate(body.GetComponent<Collider>());
+
+            GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            head.name = "Head";
+            head.transform.SetParent(npc.transform);
+            head.transform.localPosition = new Vector3(0f, 1.85f, 0f);
+            head.transform.localScale = Vector3.one * 0.42f;
+            Object.DestroyImmediate(head.GetComponent<Collider>());
+            SetRendererMaterial(head, skinMat);
+
+            TownNPC town = npc.AddComponent<TownNPC>();
+            town.bodyMaterial = bodyMat;
+            town.bodyTint = tint;
+            town.skinMaterial = skinMat;
+            town.SetRoute(route);
+            town.walkSpeed = UnityEngine.Random.Range(1f, 1.6f);
         }
 
         private static void BuildRoadLines(Transform parent, Material mat)
@@ -665,8 +749,10 @@ namespace Rise.EditorTools
             Directory.CreateDirectory(materialsFolder);
 
             GameManager gameManager = EnsureGameManager();
-            JobDefinition job = EnsureJobDefinition();
-            EnsureWorkStation(job);
+            JobDefinition general = EnsureJobAsset("Job_GeneralWorker", "General Worker", 30, 0);
+            JobDefinition cashier = EnsureJobAsset("Job_Cashier", "Cashier", 60, 200);
+            JobDefinition manager = EnsureJobAsset("Job_Manager", "Manager", 120, 1000);
+            EnsureWorkStations(general, cashier, manager);
             EnsurePlayerNeeds();
             EnsureShop();
             EnsurePartner();
@@ -689,31 +775,45 @@ namespace Rise.EditorTools
             return gmGO.AddComponent<GameManager>();
         }
 
-        private static JobDefinition EnsureJobDefinition()
+        private static JobDefinition EnsureJobAsset(string fileName, string jobName, int pay, int unlock)
         {
-            const string path = "Assets/Data/Jobs/Job_GeneralWorker.asset";
+            const string jobsFolder = "Assets/Data/Jobs";
+            string path = jobsFolder + "/" + fileName + ".asset";
+            Directory.CreateDirectory(jobsFolder);
             JobDefinition job = AssetDatabase.LoadAssetAtPath<JobDefinition>(path);
-            if (job != null) return job;
-
-            Directory.CreateDirectory("Assets/Data/Jobs");
-            job = ScriptableObject.CreateInstance<JobDefinition>();
-            job.name = "Job_GeneralWorker";
-            AssetDatabase.CreateAsset(job, path);
+            if (job == null)
+            {
+                job = ScriptableObject.CreateInstance<JobDefinition>();
+                job.name = fileName;
+                AssetDatabase.CreateAsset(job, path);
+            }
+            job.Configure(jobName, pay, unlock, "");
+            EditorUtility.SetDirty(job);
             return job;
         }
 
-        private static void EnsureWorkStation(JobDefinition job)
+        private static void EnsureWorkStations(JobDefinition general, JobDefinition cashier, JobDefinition manager)
         {
-            Vector3 spot = new Vector3(12f, 0.25f, 14f);
-            WorkStation existing = Object.FindFirstObjectByType<WorkStation>();
-            if (existing != null)
+            GameObject old = GameObject.Find("WorkSpot_Shop");
+            if (old != null) Object.DestroyImmediate(old);
+
+            EnsureStation(general, new Vector3(12f, 0.25f, 14f), "WorkSpot_General");
+            EnsureStation(cashier, new Vector3(13f, 0.25f, -6f), "WorkSpot_Cashier");
+            EnsureStation(manager, new Vector3(0f, 0.25f, -22f), "WorkSpot_Manager");
+        }
+
+        private static void EnsureStation(JobDefinition job, Vector3 spot, string name)
+        {
+            GameObject marker = GameObject.Find(name);
+            if (marker != null)
             {
-                existing.transform.position = spot;
+                marker.transform.position = spot;
+                marker.GetComponent<WorkStation>().SetJob(job);
                 return;
             }
 
-            GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            marker.name = "WorkSpot_Shop";
+            marker = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            marker.name = name;
             marker.transform.position = spot;
             marker.transform.localScale = new Vector3(2.2f, 0.5f, 2.2f);
             Object.DestroyImmediate(marker.GetComponent<Collider>());

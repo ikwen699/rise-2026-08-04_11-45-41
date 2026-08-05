@@ -36,12 +36,15 @@ namespace Rise.Core
         public Partner Partner { get; private set; }
 
         private readonly List<ShopStand> _shops = new List<ShopStand>();
+        private readonly List<WorkStation> _stations = new List<WorkStation>();
         private float _jobEarnAccumulator;
         private Transform _player;
         private Light _sun;
 
         public int ShopCount => _shops.Count;
         public ShopStand GetShop(int index) => _shops[index];
+        public int StationCount => _stations.Count;
+        public WorkStation GetStation(int index) => _stations[index];
 
         private void Awake()
         {
@@ -88,6 +91,10 @@ namespace Rise.Core
             {
                 Partner.ApplySaved(loaded.affection, loaded.married, loaded.marriageDay, loaded.childSpawned);
             }
+            if (Jobs != null && loaded != null)
+            {
+                Jobs.ApplyTotalEarned(loaded.totalEarned);
+            }
         }
 
         private void Update()
@@ -130,9 +137,11 @@ namespace Rise.Core
         private void SetupWorkStations()
         {
             WorkStation[] stations = FindObjectsByType<WorkStation>(FindObjectsInactive.Include);
+            _stations.Clear();
             foreach (WorkStation station in stations)
             {
                 station.Configure(_player, this);
+                _stations.Add(station);
             }
         }
 
@@ -168,6 +177,7 @@ namespace Rise.Core
             {
                 _jobEarnAccumulator -= earned;
                 Wallet.Add(earned);
+                Jobs.AddEarned(earned);
             }
         }
 
@@ -185,6 +195,15 @@ namespace Rise.Core
             if (Jobs.IsWorking)
             {
                 Jobs.StopWorking();
+                return;
+            }
+
+            if (!Jobs.IsUnlocked(job))
+            {
+                if (Needs != null)
+                {
+                    Needs.ShowMessage("Locked. Earn $" + job.UnlockEarned + " total to work as " + job.JobName + ".");
+                }
                 return;
             }
 
@@ -222,7 +241,8 @@ namespace Rise.Core
                 affection = Partner != null ? Partner.Affection : 0f,
                 married = Partner != null && Partner.Married,
                 marriageDay = Partner != null ? Partner.MarriageDay : 0,
-                childSpawned = Partner != null && Partner.ChildSpawned
+                childSpawned = Partner != null && Partner.ChildSpawned,
+                totalEarned = Jobs.TotalEarned
             });
         }
 
