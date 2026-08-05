@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using Rise.Core;
 using Rise.Systems;
@@ -15,6 +16,9 @@ namespace Rise.UI
         [SerializeField] private Text shopText;
         [SerializeField] private Text phoneText;
         [SerializeField] private GameManager gameManager;
+
+        private CanvasGroup _canvasGroup;
+        private bool _hudVisible = true;
 
         private void Start()
         {
@@ -53,6 +57,19 @@ namespace Rise.UI
         private void Update()
         {
             if (gameManager == null) return;
+
+            if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame)
+            {
+                _hudVisible = !_hudVisible;
+                if (_canvasGroup == null) _canvasGroup = GetComponent<CanvasGroup>();
+                if (_canvasGroup != null)
+                {
+                    _canvasGroup.alpha = _hudVisible ? 1f : 0f;
+                    _canvasGroup.blocksRaycasts = _hudVisible;
+                }
+            }
+
+            if (!_hudVisible) return;
 
             PlayerNeeds needs = gameManager.Needs;
             if (needs != null)

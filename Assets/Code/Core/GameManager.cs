@@ -53,6 +53,7 @@ namespace Rise.Core
         public ClothingStand ActiveClothingShop { get; set; }
         public Partner Partner { get; private set; }
         public TownNPC ActiveTownNPC { get; set; }
+        public Transform Player => _player;
 
         private readonly List<ShopStand> _shops = new List<ShopStand>();
         private readonly List<WorkStation> _stations = new List<WorkStation>();
@@ -132,6 +133,7 @@ namespace Rise.Core
             SetupPartner();
             SetupTownspeople();
             SetupCars();
+            SetupDoors();
             SetupRival();
             Quests.Configure(this);
             Properties.Configure(this);
@@ -300,6 +302,16 @@ namespace Rise.Core
             {
                 car.Configure(_player, this);
                 _cars.Add(car);
+            }
+        }
+
+        private void SetupDoors()
+        {
+            DoorInteractable[] doors = FindObjectsByType<DoorInteractable>(FindObjectsInactive.Include);
+            CanvasGroup fade = FindAnyObjectByType<Canvas>()?.GetComponentInChildren<CanvasGroup>();
+            foreach (DoorInteractable door in doors)
+            {
+                door.Configure(_player, this, fade);
             }
         }
 

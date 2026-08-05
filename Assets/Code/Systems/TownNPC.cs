@@ -25,6 +25,28 @@ namespace Rise.Systems
         public int homeHourEnter = 18;
         public int homeHourLeave = 6;
 
+        private static readonly System.Collections.Generic.Dictionary<string, Vector3> BuildingPositions = new()
+        {
+            { "House_01", new Vector3(-16f, 0f, 12f) },
+            { "House_02", new Vector3(-16f, 0f, -12f) },
+            { "Shop_01", new Vector3(12f, 0f, 6f) },
+            { "Shop_02", new Vector3(12f, 0f, -14f) },
+            { "TownHall", new Vector3(0f, 0f, -30f) },
+            { "Market_01", new Vector3(20f, 0f, 24f) },
+            { "Market_02", new Vector3(-22f, 0f, 24f) },
+            { "Church", new Vector3(0f, 0f, 42f) },
+            { "School", new Vector3(-36f, 0f, 32f) },
+            { "Bakery", new Vector3(-22f, 0f, 36f) },
+            { "Bank", new Vector3(22f, 0f, 36f) },
+            { "House_03", new Vector3(36f, 0f, 32f) },
+            { "House_04", new Vector3(16f, 0f, 46f) },
+            { "House_05", new Vector3(-16f, 0f, 46f) },
+            { "Restaurant", new Vector3(22f, 0f, -36f) },
+            { "PostOffice", new Vector3(-22f, 0f, -36f) },
+            { "House_06", new Vector3(16f, 0f, -46f) },
+            { "House_07", new Vector3(-16f, 0f, -46f) }
+        };
+
         private int _index;
         private float _idleTimer;
         private bool _idling;
@@ -57,6 +79,7 @@ namespace Rise.Systems
         private float _standLookTimer;
 
         private bool _isHome;
+        private Vector3 _lastRoutePosition;
         private float _homeCheckTimer;
 
         public bool IsOpen => _isOpen;
@@ -312,7 +335,11 @@ namespace Rise.Systems
 
         private void GoHome()
         {
+            if (string.IsNullOrEmpty(homeBuilding)) return;
+            if (!BuildingPositions.TryGetValue(homeBuilding, out Vector3 homePos)) return;
+            _lastRoutePosition = transform.position;
             _isHome = true;
+            transform.position = homePos + Vector3.up * 0.1f;
             Renderer[] renderers = GetComponentsInChildren<Renderer>();
             foreach (Renderer r in renderers)
                 r.enabled = false;
@@ -323,6 +350,7 @@ namespace Rise.Systems
         private void LeaveHome()
         {
             _isHome = false;
+            transform.position = _lastRoutePosition;
             Renderer[] renderers = GetComponentsInChildren<Renderer>();
             foreach (Renderer r in renderers)
                 r.enabled = true;

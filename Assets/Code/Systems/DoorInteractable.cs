@@ -18,7 +18,7 @@ namespace Rise.Systems
         private Core.GameManager _gameManager;
         private bool _playerInRange;
         private bool _isInside;
-        private float _interactRadius = 3f;
+        private float _interactRadius = 4f;
         private float _fadeTimer;
         private bool _fading;
         private CanvasGroup _fadeOverlay;
@@ -174,6 +174,34 @@ namespace Rise.Systems
             float roomW = 8f;
             float roomD = 8f;
             float roomH = 3.5f;
+
+            switch (buildingName)
+            {
+                case "Bakery":
+                    BuildBakeryInterior(interior.transform, suffix, 8f, 8f, 3.5f, floorMat, wallMat, ceilMat, furnMat, metalMat);
+                    return;
+                case "Restaurant":
+                    BuildRestaurantInterior(interior.transform, suffix, 8f, 8f, 3.5f, floorMat, wallMat, ceilMat, furnMat, fabricMat, metalMat);
+                    return;
+                case "Bank":
+                    BuildBankInterior(interior.transform, suffix, 8f, 8f, 3.5f, floorMat, wallMat, ceilMat, furnMat, metalMat, glassMat);
+                    return;
+                case "School":
+                    BuildSchoolInterior(interior.transform, suffix, 10f, 12f, 4f, floorMat, wallMat, ceilMat, furnMat, metalMat);
+                    return;
+                case "PostOffice":
+                    BuildPostOfficeInterior(interior.transform, suffix, 8f, 8f, 3.5f, floorMat, wallMat, ceilMat, furnMat, metalMat);
+                    return;
+                case "TownHall":
+                    BuildTownHallInterior(interior.transform, suffix, 10f, 10f, 4f, floorMat, wallMat, ceilMat, furnMat, metalMat, fabricMat);
+                    return;
+                case "Shop_01":
+                    BuildGroceryInterior(interior.transform, suffix, 8f, 8f, 3.5f, floorMat, wallMat, ceilMat, furnMat, metalMat, glassMat);
+                    return;
+                case "Shop_02":
+                    BuildFlowerShopInterior(interior.transform, suffix, 8f, 8f, 3.5f, floorMat, wallMat, ceilMat, furnMat, fabricMat, metalMat);
+                    return;
+            }
 
             switch (interiorType)
             {
@@ -355,6 +383,156 @@ namespace Rise.Systems
             Renderer r = go.GetComponent<Renderer>();
             if (r != null && mat != null) r.sharedMaterial = mat;
             Object.DestroyImmediate(go.GetComponent<Collider>());
+        }
+
+        private void BuildBakeryInterior(Transform parent, string suffix, float w, float d, float h,
+            Material floor, Material wall, Material ceil, Material furn, Material metal)
+        {
+            MakeBox(parent, "Floor", new Vector3(0f, -0.05f, 0f), new Vector3(w, 0.1f, d), floor);
+            MakeBox(parent, "Ceiling", new Vector3(0f, h, 0f), new Vector3(w, 0.1f, d), ceil);
+            MakeBox(parent, "WallBack", new Vector3(0f, h * 0.5f, -d * 0.5f), new Vector3(w, h, 0.2f), wall);
+            MakeBox(parent, "WallLeft", new Vector3(-w * 0.5f, h * 0.5f, 0f), new Vector3(0.2f, h, d), wall);
+            MakeBox(parent, "WallRight", new Vector3(w * 0.5f, h * 0.5f, 0f), new Vector3(0.2f, h, d), wall);
+            MakeBox(parent, "Counter", new Vector3(0f, 0.5f, -d * 0.25f), new Vector3(w * 0.8f, 1f, 1f), furn);
+            MakeBox(parent, "CounterTop", new Vector3(0f, 1.05f, -d * 0.25f), new Vector3(w * 0.8f + 0.1f, 0.08f, 1.1f), metal);
+            MakeBox(parent, "ShelfL", new Vector3(-w * 0.35f, 1.8f, -d * 0.35f), new Vector3(2f, 0.1f, 0.5f), furn);
+            MakeBox(parent, "ShelfM", new Vector3(0f, 1.8f, -d * 0.35f), new Vector3(2f, 0.1f, 0.5f), furn);
+            MakeBox(parent, "ShelfR", new Vector3(w * 0.35f, 1.8f, -d * 0.35f), new Vector3(2f, 0.1f, 0.5f), furn);
+            MakeBox(parent, "Oven", new Vector3(w * 0.3f, 0.6f, -d * 0.4f), new Vector3(1.5f, 1.2f, 1.2f), metal);
+            MakeBox(parent, "OvenDoor", new Vector3(w * 0.3f, 0.5f, -d * 0.4f + 0.6f), new Vector3(1.1f, 0.7f, 0.05f), metal);
+            MakeBox(parent, "BreadDisplay", new Vector3(-w * 0.3f, 1.2f, d * 0.15f), new Vector3(2f, 0.3f, 0.8f), new Material(Shader.Find("Universal Render Pipeline/Lit")) { color = new Color(0.8f, 0.7f, 0.5f, 0.4f) });
+        }
+
+        private void BuildRestaurantInterior(Transform parent, string suffix, float w, float d, float h,
+            Material floor, Material wall, Material ceil, Material furn, Material fabric, Material metal)
+        {
+            MakeBox(parent, "Floor", new Vector3(0f, -0.05f, 0f), new Vector3(w, 0.1f, d), floor);
+            MakeBox(parent, "Ceiling", new Vector3(0f, h, 0f), new Vector3(w, 0.1f, d), ceil);
+            MakeBox(parent, "WallBack", new Vector3(0f, h * 0.5f, -d * 0.5f), new Vector3(w, h, 0.2f), wall);
+            MakeBox(parent, "WallLeft", new Vector3(-w * 0.5f, h * 0.5f, 0f), new Vector3(0.2f, h, d), wall);
+            MakeBox(parent, "WallRight", new Vector3(w * 0.5f, h * 0.5f, 0f), new Vector3(0.2f, h, d), wall);
+            MakeBox(parent, "Table1", new Vector3(-w * 0.25f, 0.4f, -d * 0.15f), new Vector3(1.2f, 0.08f, 1.2f), furn);
+            MakeBox(parent, "Chair1A", new Vector3(-w * 0.25f - 0.7f, 0.25f, -d * 0.15f), new Vector3(0.4f, 0.5f, 0.4f), fabric);
+            MakeBox(parent, "Chair1B", new Vector3(-w * 0.25f + 0.7f, 0.25f, -d * 0.15f), new Vector3(0.4f, 0.5f, 0.4f), fabric);
+            MakeBox(parent, "Table2", new Vector3(w * 0.25f, 0.4f, -d * 0.15f), new Vector3(1.2f, 0.08f, 1.2f), furn);
+            MakeBox(parent, "Chair2A", new Vector3(w * 0.25f - 0.7f, 0.25f, -d * 0.15f), new Vector3(0.4f, 0.5f, 0.4f), fabric);
+            MakeBox(parent, "Chair2B", new Vector3(w * 0.25f + 0.7f, 0.25f, -d * 0.15f), new Vector3(0.4f, 0.5f, 0.4f), fabric);
+            MakeBox(parent, "Table3", new Vector3(0f, 0.4f, d * 0.2f), new Vector3(1.2f, 0.08f, 1.2f), furn);
+            MakeBox(parent, "Chair3A", new Vector3(-0.7f, 0.25f, d * 0.2f), new Vector3(0.4f, 0.5f, 0.4f), fabric);
+            MakeBox(parent, "Chair3B", new Vector3(0.7f, 0.25f, d * 0.2f), new Vector3(0.4f, 0.5f, 0.4f), fabric);
+            MakeBox(parent, "KitchenPass", new Vector3(0f, 1.2f, -d * 0.45f), new Vector3(w * 0.5f, 0.08f, 0.6f), metal);
+            MakeBox(parent, "Stove", new Vector3(0f, 0.45f, -d * 0.45f), new Vector3(2f, 0.9f, 0.8f), metal);
+        }
+
+        private void BuildBankInterior(Transform parent, string suffix, float w, float d, float h,
+            Material floor, Material wall, Material ceil, Material furn, Material metal, Material glass)
+        {
+            MakeBox(parent, "Floor", new Vector3(0f, -0.05f, 0f), new Vector3(w, 0.1f, d), floor);
+            MakeBox(parent, "Ceiling", new Vector3(0f, h, 0f), new Vector3(w, 0.1f, d), ceil);
+            MakeBox(parent, "WallBack", new Vector3(0f, h * 0.5f, -d * 0.5f), new Vector3(w, h, 0.2f), wall);
+            MakeBox(parent, "WallLeft", new Vector3(-w * 0.5f, h * 0.5f, 0f), new Vector3(0.2f, h, d), wall);
+            MakeBox(parent, "WallRight", new Vector3(w * 0.5f, h * 0.5f, 0f), new Vector3(0.2f, h, d), wall);
+            MakeBox(parent, "Counter", new Vector3(0f, 0.5f, -d * 0.3f), new Vector3(w * 0.9f, 1f, 0.8f), furn);
+            MakeBox(parent, "CounterTop", new Vector3(0f, 1.05f, -d * 0.3f), new Vector3(w * 0.9f + 0.1f, 0.06f, 0.9f), metal);
+            MakeBox(parent, "GlassPartition", new Vector3(0f, 1.6f, -d * 0.3f), new Vector3(w * 0.6f, 1f, 0.05f), glass);
+            MakeBox(parent, "Desk1", new Vector3(-w * 0.3f, 0.4f, d * 0.15f), new Vector3(1.4f, 0.08f, 0.8f), furn);
+            MakeBox(parent, "Chair1", new Vector3(-w * 0.3f, 0.25f, d * 0.3f), new Vector3(0.45f, 0.5f, 0.45f), fabric);
+            MakeBox(parent, "Desk2", new Vector3(w * 0.3f, 0.4f, d * 0.15f), new Vector3(1.4f, 0.08f, 0.8f), furn);
+            MakeBox(parent, "Chair2", new Vector3(w * 0.3f, 0.25f, d * 0.3f), new Vector3(0.45f, 0.5f, 0.45f), fabric);
+            MakeBox(parent, "Vault", new Vector3(0f, 1f, -d * 0.45f), new Vector3(2f, 2f, 0.5f), metal);
+        }
+
+        private void BuildSchoolInterior(Transform parent, string suffix, float w, float d, float h,
+            Material floor, Material wall, Material ceil, Material furn, Material metal)
+        {
+            MakeBox(parent, "Floor", new Vector3(0f, -0.05f, 0f), new Vector3(w, 0.1f, d), floor);
+            MakeBox(parent, "Ceiling", new Vector3(0f, h, 0f), new Vector3(w, 0.1f, d), ceil);
+            MakeBox(parent, "WallBack", new Vector3(0f, h * 0.5f, -d * 0.5f), new Vector3(w, h, 0.2f), wall);
+            MakeBox(parent, "WallLeft", new Vector3(-w * 0.5f, h * 0.5f, 0f), new Vector3(0.2f, h, d), wall);
+            MakeBox(parent, "WallRight", new Vector3(w * 0.5f, h * 0.5f, 0f), new Vector3(0.2f, h, d), wall);
+            MakeBox(parent, "Chalkboard", new Vector3(0f, 2.2f, -d * 0.45f), new Vector3(5f, 2f, 0.1f), new Material(Shader.Find("Universal Render Pipeline/Lit")) { color = new Color(0.15f, 0.3f, 0.15f) });
+            MakeBox(parent, "TeacherDesk", new Vector3(0f, 0.4f, -d * 0.25f), new Vector3(2f, 0.08f, 1f), furn);
+            MakeBox(parent, "StudentDesk1", new Vector3(-w * 0.25f, 0.35f, d * 0.1f), new Vector3(0.8f, 0.07f, 0.6f), furn);
+            MakeBox(parent, "StudentDesk2", new Vector3(0f, 0.35f, d * 0.1f), new Vector3(0.8f, 0.07f, 0.6f), furn);
+            MakeBox(parent, "StudentDesk3", new Vector3(w * 0.25f, 0.35f, d * 0.1f), new Vector3(0.8f, 0.07f, 0.6f), furn);
+            MakeBox(parent, "StudentDesk4", new Vector3(-w * 0.25f, 0.35f, d * 0.35f), new Vector3(0.8f, 0.07f, 0.6f), furn);
+            MakeBox(parent, "StudentDesk5", new Vector3(0f, 0.35f, d * 0.35f), new Vector3(0.8f, 0.07f, 0.6f), furn);
+            MakeBox(parent, "StudentDesk6", new Vector3(w * 0.25f, 0.35f, d * 0.35f), new Vector3(0.8f, 0.07f, 0.6f), furn);
+            MakeBox(parent, "ChairRow1", new Vector3(-w * 0.25f, 0.22f, d * 0.22f), new Vector3(0.4f, 0.44f, 0.4f), metal);
+            MakeBox(parent, "ChairRow2", new Vector3(0f, 0.22f, d * 0.22f), new Vector3(0.4f, 0.44f, 0.4f), metal);
+            MakeBox(parent, "ChairRow3", new Vector3(w * 0.25f, 0.22f, d * 0.22f), new Vector3(0.4f, 0.44f, 0.4f), metal);
+        }
+
+        private void BuildPostOfficeInterior(Transform parent, string suffix, float w, float d, float h,
+            Material floor, Material wall, Material ceil, Material furn, Material metal)
+        {
+            MakeBox(parent, "Floor", new Vector3(0f, -0.05f, 0f), new Vector3(w, 0.1f, d), floor);
+            MakeBox(parent, "Ceiling", new Vector3(0f, h, 0f), new Vector3(w, 0.1f, d), ceil);
+            MakeBox(parent, "WallBack", new Vector3(0f, h * 0.5f, -d * 0.5f), new Vector3(w, h, 0.2f), wall);
+            MakeBox(parent, "WallLeft", new Vector3(-w * 0.5f, h * 0.5f, 0f), new Vector3(0.2f, h, d), wall);
+            MakeBox(parent, "WallRight", new Vector3(w * 0.5f, h * 0.5f, 0f), new Vector3(0.2f, h, d), wall);
+            MakeBox(parent, "SortingCounter", new Vector3(0f, 0.5f, -d * 0.25f), new Vector3(w * 0.8f, 1f, 1f), furn);
+            MakeBox(parent, "SortingTop", new Vector3(0f, 1.05f, -d * 0.25f), new Vector3(w * 0.8f + 0.1f, 0.06f, 1.1f), metal);
+            MakeBox(parent, "MailSlot1", new Vector3(-w * 0.3f, 1.5f, -d * 0.35f), new Vector3(0.6f, 0.4f, 0.3f), furn);
+            MakeBox(parent, "MailSlot2", new Vector3(-w * 0.1f, 1.5f, -d * 0.35f), new Vector3(0.6f, 0.4f, 0.3f), furn);
+            MakeBox(parent, "MailSlot3", new Vector3(w * 0.1f, 1.5f, -d * 0.35f), new Vector3(0.6f, 0.4f, 0.3f), furn);
+            MakeBox(parent, "MailSlot4", new Vector3(w * 0.3f, 1.5f, -d * 0.35f), new Vector3(0.6f, 0.4f, 0.3f), furn);
+            MakeBox(parent, "PackageShelf", new Vector3(w * 0.35f, 1f, -d * 0.35f), new Vector3(1.5f, 2f, 0.6f), furn);
+            MakeBox(parent, "Scale", new Vector3(-w * 0.35f, 1.15f, d * 0.1f), new Vector3(0.5f, 0.3f, 0.5f), metal);
+            MakeBox(parent, "POTerminal", new Vector3(w * 0.1f, 1.1f, d * 0.1f), new Vector3(0.4f, 0.2f, 0.3f), metal);
+        }
+
+        private void BuildTownHallInterior(Transform parent, string suffix, float w, float d, float h,
+            Material floor, Material wall, Material ceil, Material furn, Material metal, Material fabric)
+        {
+            MakeBox(parent, "Floor", new Vector3(0f, -0.05f, 0f), new Vector3(w, 0.1f, d), floor);
+            MakeBox(parent, "Ceiling", new Vector3(0f, h, 0f), new Vector3(w, 0.1f, d), ceil);
+            MakeBox(parent, "WallBack", new Vector3(0f, h * 0.5f, -d * 0.5f), new Vector3(w, h, 0.2f), wall);
+            MakeBox(parent, "WallLeft", new Vector3(-w * 0.5f, h * 0.5f, 0f), new Vector3(0.2f, h, d), wall);
+            MakeBox(parent, "WallRight", new Vector3(w * 0.5f, h * 0.5f, 0f), new Vector3(0.2f, h, d), wall);
+            MakeBox(parent, "Podium", new Vector3(0f, 0.5f, -d * 0.35f), new Vector3(1.5f, 1f, 1f), furn);
+            MakeBox(parent, "PodiumTop", new Vector3(0f, 1.05f, -d * 0.35f), new Vector3(1.6f, 0.06f, 1.1f), metal);
+            MakeBox(parent, "DeskLeft", new Vector3(-w * 0.3f, 0.4f, -d * 0.1f), new Vector3(1.5f, 0.08f, 0.8f), furn);
+            MakeBox(parent, "DeskRight", new Vector3(w * 0.3f, 0.4f, -d * 0.1f), new Vector3(1.5f, 0.08f, 0.8f), furn);
+            MakeBox(parent, "ChairLeft", new Vector3(-w * 0.3f, 0.25f, d * 0.05f), new Vector3(0.5f, 0.5f, 0.5f), fabric);
+            MakeBox(parent, "ChairRight", new Vector3(w * 0.3f, 0.25f, d * 0.05f), new Vector3(0.5f, 0.5f, 0.5f), fabric);
+            MakeBox(parent, "FlagStand", new Vector3(-w * 0.4f, 1.2f, -d * 0.4f), new Vector3(0.15f, 2.4f, 0.15f), metal);
+            MakeBox(parent, "BulletinBoard", new Vector3(0f, 1.8f, -d * 0.48f), new Vector3(2f, 1.2f, 0.05f), furn);
+        }
+
+        private void BuildGroceryInterior(Transform parent, string suffix, float w, float d, float h,
+            Material floor, Material wall, Material ceil, Material furn, Material metal, Material glass)
+        {
+            MakeBox(parent, "Floor", new Vector3(0f, -0.05f, 0f), new Vector3(w, 0.1f, d), floor);
+            MakeBox(parent, "Ceiling", new Vector3(0f, h, 0f), new Vector3(w, 0.1f, d), ceil);
+            MakeBox(parent, "WallBack", new Vector3(0f, h * 0.5f, -d * 0.5f), new Vector3(w, h, 0.2f), wall);
+            MakeBox(parent, "WallLeft", new Vector3(-w * 0.5f, h * 0.5f, 0f), new Vector3(0.2f, h, d), wall);
+            MakeBox(parent, "WallRight", new Vector3(w * 0.5f, h * 0.5f, 0f), new Vector3(0.2f, h, d), wall);
+            MakeBox(parent, "CheckoutCounter", new Vector3(0f, 0.5f, -d * 0.3f), new Vector3(3f, 1f, 0.8f), furn);
+            MakeBox(parent, "CheckoutTop", new Vector3(0f, 1.05f, -d * 0.3f), new Vector3(3.1f, 0.06f, 0.9f), metal);
+            MakeBox(parent, "Register", new Vector3(0f, 1.2f, -d * 0.3f), new Vector3(0.5f, 0.3f, 0.4f), metal);
+            MakeBox(parent, "AisleL", new Vector3(-w * 0.25f, 0.7f, d * 0.1f), new Vector3(1f, 1.4f, 4f), furn);
+            MakeBox(parent, "AisleR", new Vector3(w * 0.25f, 0.7f, d * 0.1f), new Vector3(1f, 1.4f, 4f), furn);
+            MakeBox(parent, "Fridge", new Vector3(w * 0.4f, 1f, -d * 0.35f), new Vector3(1.2f, 2f, 0.8f), glass);
+        }
+
+        private void BuildFlowerShopInterior(Transform parent, string suffix, float w, float d, float h,
+            Material floor, Material wall, Material ceil, Material furn, Material fabric, Material metal)
+        {
+            MakeBox(parent, "Floor", new Vector3(0f, -0.05f, 0f), new Vector3(w, 0.1f, d), floor);
+            MakeBox(parent, "Ceiling", new Vector3(0f, h, 0f), new Vector3(w, 0.1f, d), ceil);
+            MakeBox(parent, "WallBack", new Vector3(0f, h * 0.5f, -d * 0.5f), new Vector3(w, h, 0.2f), wall);
+            MakeBox(parent, "WallLeft", new Vector3(-w * 0.5f, h * 0.5f, 0f), new Vector3(0.2f, h, d), wall);
+            MakeBox(parent, "WallRight", new Vector3(w * 0.5f, h * 0.5f, 0f), new Vector3(0.2f, h, d), wall);
+            MakeBox(parent, "Counter", new Vector3(0f, 0.5f, -d * 0.25f), new Vector3(w * 0.7f, 1f, 0.8f), furn);
+            MakeBox(parent, "CounterTop", new Vector3(0f, 1.05f, -d * 0.25f), new Vector3(w * 0.7f + 0.1f, 0.06f, 0.9f), metal);
+            MakeBox(parent, "Vase1", new Vector3(-w * 0.3f, 1.25f, -d * 0.25f), new Vector3(0.3f, 0.4f, 0.3f), fabric);
+            MakeBox(parent, "Vase2", new Vector3(w * 0.3f, 1.25f, -d * 0.25f), new Vector3(0.3f, 0.4f, 0.3f), fabric);
+            MakeBox(parent, "FlowerBucket1", new Vector3(-w * 0.35f, 0.4f, d * 0.15f), new Vector3(0.5f, 0.8f, 0.5f), fabric);
+            MakeBox(parent, "FlowerBucket2", new Vector3(-w * 0.15f, 0.4f, d * 0.15f), new Vector3(0.5f, 0.8f, 0.5f), fabric);
+            MakeBox(parent, "FlowerBucket3", new Vector3(w * 0.15f, 0.4f, d * 0.15f), new Vector3(0.5f, 0.8f, 0.5f), fabric);
+            MakeBox(parent, "FlowerBucket4", new Vector3(w * 0.35f, 0.4f, d * 0.15f), new Vector3(0.5f, 0.8f, 0.5f), fabric);
+            MakeBox(parent, "DisplayTable", new Vector3(0f, 0.35f, d * 0.3f), new Vector3(3f, 0.7f, 1.5f), furn);
         }
 
         private static Material CreateInteriorMat(string name, Color color)

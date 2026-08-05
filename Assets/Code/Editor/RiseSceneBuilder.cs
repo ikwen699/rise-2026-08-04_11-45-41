@@ -250,7 +250,7 @@ namespace Rise.EditorTools
             body.transform.position = basePos + Vector3.up * (baseSize.y * 0.5f);
             body.transform.localScale = baseSize;
             SetRendererMaterial(body, wallMat);
-            Object.DestroyImmediate(body.GetComponent<Collider>());
+            body.isStatic = true;
 
             float corniceH = 0.25f;
             float corniceY = basePos.y + baseSize.y - corniceH * 0.5f;
@@ -665,60 +665,61 @@ namespace Rise.EditorTools
 
             BuildCitizen(npcs, "Citizen_1", new Vector3(0f, 0f, -16f), roadRoute,
                 skinTones[0], shirts[0], pants[0], hairs[0], heights[0], 1.2f,
-                "Old Thomas", new[] { "I've lived in this town for forty years.", "The market used to be twice this size.", "Come back when you're older, kid." }, "Marriage keeps you humble.", NPCBehavior.Guard);
+                "Old Thomas", new[] { "I've lived in this town for forty years.", "The market used to be twice this size.", "Come back when you're older, kid." }, "Marriage keeps you humble.", NPCBehavior.Guard, "House_01");
 
             BuildCitizen(npcs, "Citizen_2", new Vector3(0f, 0f, 24f), roadRoute,
                 skinTones[1], shirts[1], pants[1], hairs[1], heights[1], 1.1f,
-                "Bella", new[] { "Welcome to town! Everything's better with a smile.", "Try the shop near the square, good prices.", "I hope you find what you're looking for." }, "Love makes every day brighter.", NPCBehavior.Wander);
+                "Bella", new[] { "Welcome to town! Everything's better with a smile.", "Try the shop near the square, good prices.", "I hope you find what you're looking for." }, "Love makes every day brighter.", NPCBehavior.Wander, "House_02");
 
             BuildCitizen(npcs, "Citizen_3", new Vector3(-4f, 0f, 26f), shopRoute,
                 skinTones[2], shirts[2], pants[2], hairs[2], heights[2], 1.15f,
-                "Grocer Mark", new[] { "Fresh bread every morning, don't miss it.", "Business has been slow lately.", "Stop by and say hello sometime." }, "My wife runs the best bakery.", NPCBehavior.Stand);
+                "Grocer Mark", new[] { "Fresh bread every morning, don't miss it.", "Business has been slow lately.", "Stop by and say hello sometime." }, "My wife runs the best bakery.", NPCBehavior.Stand, "Shop_01");
 
             BuildCitizen(npcs, "Citizen_4", new Vector3(4f, 0f, 26f), shopRoute,
                 skinTones[3], shirts[3], pants[3], hairs[3], heights[3], 0.95f,
-                "Lucy", new[] { "The flowers here are beautiful, aren't they?", "I work at the flower stand.", "A little kindness goes a long way." }, "My husband helps at the market.", NPCBehavior.Wander);
+                "Lucy", new[] { "The flowers here are beautiful, aren't they?", "I work at the flower stand.", "A little kindness goes a long way." }, "My husband helps at the market.", NPCBehavior.Wander, "Shop_02");
 
             BuildCitizen(npcs, "Citizen_5", new Vector3(16f, 0f, 20f), marketEast,
                 skinTones[4], shirts[4], pants[4], hairs[4], heights[4], 1.2f,
-                "Farmer Joe", new[] { "I grow the best vegetables in the county.", "The soil here is rich and good.", "Work hard, eat well, sleep tight." }, "My wife brings me lunch every day.", NPCBehavior.Stand);
+                "Farmer Joe", new[] { "I grow the best vegetables in the county.", "The soil here is rich and good.", "Work hard, eat well, sleep tight." }, "My wife brings me lunch every day.", NPCBehavior.Stand, "Market_01");
 
             BuildCitizen(npcs, "Citizen_6", new Vector3(-16f, 0f, 20f), marketWest,
                 skinTones[5], shirts[5], pants[5], hairs[5], heights[5], 1.0f,
-                "Millie", new[] { "I teach the children at the schoolhouse.", "Education opens every door.", "Keep your chin up, things will improve." }, "My sweetheart brings me flowers.", NPCBehavior.Wander);
+                "Millie", new[] { "I teach the children at the schoolhouse.", "Education opens every door.", "Keep your chin up, things will improve." }, "My sweetheart brings me flowers.", NPCBehavior.Wander, "School");
 
             BuildCitizen(npcs, "Citizen_7", new Vector3(0f, 0f, 32f), roadRoute,
                 skinTones[6], shirts[6], pants[6], hairs[6], heights[6], 1.1f,
-                "Sam", new[] { "The town hall is where you get your papers.", "I'm in charge of keeping the roads clean.", "It's a living, not much else to say.", "The mayor's a good man, listen to him.", "Stay out of trouble and you'll be fine." }, "My partner keeps me in line.", NPCBehavior.Route);
+                "Sam", new[] { "The town hall is where you get your papers.", "I'm in charge of keeping the roads clean.", "It's a living, not much else to say.", "The mayor's a good man, listen to him.", "Stay out of trouble and you'll be fine." }, "My partner keeps me in line.", NPCBehavior.Route, "TownHall");
 
             BuildCitizen(npcs, "Citizen_8", new Vector3(0f, 0f, 42f), northLoop,
                 skinTones[7], shirts[7], pants[7], hairs[7], heights[7], 0.9f,
-                "Pastor John", new[] { "The church welcomes all.", "Prayer and community keep us strong.", "Visit the school when you have time." }, "My wife plays the organ beautifully.", NPCBehavior.Stand);
+                "Pastor John", new[] { "The church welcomes all.", "Prayer and community keep us strong.", "Visit the school when you have time." }, "My wife plays the organ beautifully.", NPCBehavior.Stand, "Church");
 
             BuildCitizen(npcs, "Citizen_9", new Vector3(-36f, 0f, 32f), crossNorth,
                 skinTones[8], shirts[8], pants[8], hairs[8], heights[8], 1.15f,
-                "Miss Elena", new[] { "I teach at the new school.", "Children are the future of this town.", "Education is the greatest gift.", "The library is open after class." }, "My partner supports all my dreams.", NPCBehavior.Stand);
+                "Miss Elena", new[] { "I teach at the new school.", "Children are the future of this town.", "Education is the greatest gift.", "The library is open after class." }, "My partner supports all my dreams.", NPCBehavior.Stand, "House_03");
 
             BuildCitizen(npcs, "Citizen_10", new Vector3(-22f, 0f, 36f), crossNorth,
                 skinTones[9], shirts[9], pants[9], hairs[9], heights[9], 1.0f,
-                "Baker Rosa", new[] { "Fresh pastries every morning at dawn.", "The secret is in the flour.", "Come try the cinnamon rolls!", "Business is better than ever." }, "My sweetheart helps knead the dough.", NPCBehavior.Stand);
+                "Baker Rosa", new[] { "Fresh pastries every morning at dawn.", "The secret is in the flour.", "Come try the cinnamon rolls!", "Business is better than ever." }, "My sweetheart helps knead the dough.", NPCBehavior.Stand, "Bakery");
 
             BuildCitizen(npcs, "Citizen_11", new Vector3(22f, 0f, 36f), crossSouth,
                 skinTones[10], shirts[10], pants[10], hairs[10], heights[10], 1.05f,
-                "Mr. Carter", new[] { "The bank is open from nine to five.", "Save your money wisely.", "Good credit opens every door.", "We have plans for every budget." }, "My wife handles all our finances.", NPCBehavior.Wander);
+                "Mr. Carter", new[] { "The bank is open from nine to five.", "Save your money wisely.", "Good credit opens every door.", "We have plans for every budget." }, "My wife handles all our finances.", NPCBehavior.Wander, "Bank");
 
             BuildCitizen(npcs, "Citizen_12", new Vector3(22f, 0f, -36f), southLoop,
                 skinTones[11], shirts[11], pants[11], hairs[11], heights[11], 1.0f,
-                "Chef Marco", new[] { "The best food in town, guaranteed.", "I learned to cook in the city.", "Try the special today.", "Every dish tells a story." }, "My partner taste-tests everything.", NPCBehavior.Stand);
+                "Chef Marco", new[] { "The best food in town, guaranteed.", "I learned to cook in the city.", "Try the special today.", "Every dish tells a story." }, "My partner taste-tests everything.", NPCBehavior.Stand, "Restaurant");
 
             BuildCitizen(npcs, "Citizen_13", new Vector3(-22f, 0f, -36f), southLoop,
                 skinTones[12], shirts[12], pants[12], hairs[12], heights[12], 1.1f,
-                "Officer Dan", new[] { "The post office is always here for you.", "Letters connect people far and wide.", "I walk this route rain or shine.", "Every delivery matters.", "The town keeps growing, keeps me busy." }, "My partner waits for me at home.", NPCBehavior.Route);
+                "Officer Dan", new[] { "The post office is always here for you.", "Letters connect people far and wide.", "I walk this route rain or shine.", "Every delivery matters.", "The town keeps growing, keeps me busy." }, "My partner waits for me at home.", NPCBehavior.Route, "PostOffice");
         }
 
         private static void BuildCitizen(Transform parent, string name, Vector3 start, Vector3[] route,
             Color skinColor, Color shirtColor, Color pantsColor, Color hairColor, float height, float walkSpeed,
-            string npcName, string[] lines, string marriedLine, NPCBehavior behavior = NPCBehavior.Route)
+            string npcName, string[] lines, string marriedLine, NPCBehavior behavior = NPCBehavior.Route,
+            string homeBuilding = "", int homeEnter = 18, int homeLeave = 6)
         {
             BuildHumanoid(parent, name, start, skinColor, shirtColor, pantsColor, hairColor, height);
 
@@ -731,6 +732,9 @@ namespace Rise.EditorTools
             town.bodyTint = shirtColor;
             town.walkSpeed = walkSpeed;
             town.behavior = behavior;
+            town.homeBuilding = homeBuilding;
+            town.homeHourEnter = homeEnter;
+            town.homeHourLeave = homeLeave;
             if (behavior == NPCBehavior.Route)
                 town.SetRoute(route);
 
@@ -1775,11 +1779,11 @@ namespace Rise.EditorTools
             {
                 GameObject doorGO = new GameObject("Door_" + b.name);
                 doorGO.transform.SetParent(doorRoot);
-                doorGO.transform.position = new Vector3(b.pos.x, 1.5f, b.pos.z + b.frontZ);
+                doorGO.transform.position = new Vector3(b.pos.x, 1f, b.pos.z + b.frontZ + 1f);
 
                 BoxCollider col = doorGO.AddComponent<BoxCollider>();
                 col.isTrigger = true;
-                col.size = new Vector3(2.5f, 3f, 1.5f);
+                col.size = new Vector3(3f, 3f, 3f);
 
                 DoorInteractable door = doorGO.AddComponent<DoorInteractable>();
                 door.buildingName = b.name;
@@ -1822,6 +1826,7 @@ namespace Rise.EditorTools
             GameObject canvasGO = new GameObject("GameHUD CanvaWindow");
             Canvas canvas = canvasGO.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvasGO.AddComponent<CanvasGroup>();
 
             CanvasScaler scaler = canvasGO.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
@@ -1837,6 +1842,9 @@ namespace Rise.EditorTools
 
             GameHUD hud = canvasGO.AddComponent<GameHUD>();
             hud.Configure(gameManager, money, time, day, work, needs, shop, phone);
+
+            MinimapUI minimap = canvasGO.AddComponent<MinimapUI>();
+            minimap.Configure(gameManager.Player);
         }
 
         private static Text CreateHudText(string name, Transform parent, Vector2 anchor, Vector2 pivot, int size, TextAnchor align)
