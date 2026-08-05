@@ -63,6 +63,7 @@ namespace Rise.UI
 
             ShopStand shop = gameManager.ActiveShop;
             Partner partner = gameManager.Partner;
+            TownNPC townNPC = gameManager.ActiveTownNPC;
             if (shop != null && shop.IsOpen)
             {
                 SetText(shopText, shop.GetMenuText());
@@ -72,6 +73,12 @@ namespace Rise.UI
             if (partner != null && partner.IsOpen)
             {
                 SetText(shopText, partner.GetMenuText());
+                if (workText != null) workText.text = "";
+                return;
+            }
+            if (townNPC != null && townNPC.IsOpen)
+            {
+                SetText(shopText, townNPC.GetDialogueText());
                 if (workText != null) workText.text = "";
                 return;
             }
@@ -95,6 +102,10 @@ namespace Rise.UI
             {
                 hint = "Press E to talk to Maya";
             }
+            else if (TryGetTalkableNPC(out TownNPC talkNPC))
+            {
+                hint = "Press E to talk to " + talkNPC.npcName;
+            }
             else if (TryGetLockedStation(out WorkStation locked))
             {
                 hint = "Locked: earn $" + locked.Job.UnlockEarned + " total to work as " + locked.Job.JobName;
@@ -115,6 +126,21 @@ namespace Rise.UI
             for (int i = 0; i < gameManager.ShopCount; i++)
             {
                 if (gameManager.GetShop(i).IsPlayerInRange) return true;
+            }
+            return false;
+        }
+
+        private bool TryGetTalkableNPC(out TownNPC talkable)
+        {
+            talkable = null;
+            for (int i = 0; i < gameManager.TownNPCCount; i++)
+            {
+                TownNPC npc = gameManager.GetTownNPC(i);
+                if (npc != null && npc.IsPlayerInRange && !npc.IsOpen)
+                {
+                    talkable = npc;
+                    return true;
+                }
             }
             return false;
         }

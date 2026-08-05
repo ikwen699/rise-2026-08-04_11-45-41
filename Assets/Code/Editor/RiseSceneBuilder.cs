@@ -378,17 +378,30 @@ namespace Rise.EditorTools
                 new Vector3(-16f, 0f, 20f), new Vector3(-24f, 0f, 28f)
             };
 
-            BuildCitizen(npcs, "Citizen_1", new Vector3(0f, 0f, -16f), roadRoute, body, skin, shirts[0]);
-            BuildCitizen(npcs, "Citizen_2", new Vector3(0f, 0f, 24f), roadRoute, body, skin, shirts[1]);
-            BuildCitizen(npcs, "Citizen_3", new Vector3(-4f, 0f, 26f), shopRoute, body, skin, shirts[2]);
-            BuildCitizen(npcs, "Citizen_4", new Vector3(4f, 0f, 26f), shopRoute, body, skin, shirts[3]);
-            BuildCitizen(npcs, "Citizen_5", new Vector3(16f, 0f, 20f), marketEast, body, skin, shirts[4]);
-            BuildCitizen(npcs, "Citizen_6", new Vector3(-16f, 0f, 20f), marketWest, body, skin, shirts[5]);
-            BuildCitizen(npcs, "Citizen_7", new Vector3(0f, 0f, 32f), roadRoute, body, skin, shirts[6]);
+            BuildCitizen(npcs, "Citizen_1", new Vector3(0f, 0f, -16f), roadRoute, body, skin, shirts[0],
+                "Old Thomas", new[] { "I've lived in this town for forty years.", "The market used to be twice this size.", "Come back when you're older, kid." }, "Marriage keeps you humble.");
+
+            BuildCitizen(npcs, "Citizen_2", new Vector3(0f, 0f, 24f), roadRoute, body, skin, shirts[1],
+                "Bella", new[] { "Welcome to town! Everything's better with a smile.", "Try the shop near the square, good prices.", "I hope you find what you're looking for." }, "Love makes every day brighter.");
+
+            BuildCitizen(npcs, "Citizen_3", new Vector3(-4f, 0f, 26f), shopRoute, body, skin, shirts[2],
+                "Grocer Mark", new[] { "Fresh bread every morning, don't miss it.", "Business has been slow lately.", "Stop by and say hello sometime." }, "My wife runs the best bakery.");
+
+            BuildCitizen(npcs, "Citizen_4", new Vector3(4f, 0f, 26f), shopRoute, body, skin, shirts[3],
+                "Lucy", new[] { "The flowers here are beautiful, aren't they?", "I work at the flower stand.", "A little kindness goes a long way." }, "My husband helps at the market.");
+
+            BuildCitizen(npcs, "Citizen_5", new Vector3(16f, 0f, 20f), marketEast, body, skin, shirts[4],
+                "Farmer Joe", new[] { "I grow the best vegetables in the county.", "The soil here is rich and good.", "Work hard, eat well, sleep tight." }, "My wife brings me lunch every day.");
+
+            BuildCitizen(npcs, "Citizen_6", new Vector3(-16f, 0f, 20f), marketWest, body, skin, shirts[5],
+                "Millie", new[] { "I teach the children at the schoolhouse.", "Education opens every door.", "Keep your chin up, things will improve." }, "My sweetheart brings me flowers.");
+
+            BuildCitizen(npcs, "Citizen_7", new Vector3(0f, 0f, 32f), roadRoute, body, skin, shirts[6],
+                "Sam", new[] { "The town hall is where you get your papers.", "I'm in charge of keeping the roads clean.", "It's a living, not much else to say.", "The mayor's a good man, listen to him.", "Stay out of trouble and you'll be fine." }, "My partner keeps me in line.");
         }
 
         private static void BuildCitizen(Transform parent, string name, Vector3 start, Vector3[] route,
-            Material bodyMat, Material skinMat, Color tint)
+            Material bodyMat, Material skinMat, Color tint, string npcName, string[] lines, string marriedLine)
         {
             GameObject npc = new GameObject(name);
             npc.transform.SetParent(parent);
@@ -410,6 +423,9 @@ namespace Rise.EditorTools
             SetRendererMaterial(head, skinMat);
 
             TownNPC town = npc.AddComponent<TownNPC>();
+            town.npcName = npcName;
+            town.lines = lines;
+            town.marriedLine = marriedLine;
             town.bodyMaterial = bodyMat;
             town.bodyTint = tint;
             town.skinMaterial = skinMat;

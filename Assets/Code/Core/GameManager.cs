@@ -34,9 +34,11 @@ namespace Rise.Core
         public PlayerNeeds Needs { get; private set; }
         public ShopStand ActiveShop { get; set; }
         public Partner Partner { get; private set; }
+        public TownNPC ActiveTownNPC { get; set; }
 
         private readonly List<ShopStand> _shops = new List<ShopStand>();
         private readonly List<WorkStation> _stations = new List<WorkStation>();
+        private readonly List<TownNPC> _townNPCs = new List<TownNPC>();
         private float _jobEarnAccumulator;
         private Transform _player;
         private Light _sun;
@@ -45,6 +47,8 @@ namespace Rise.Core
         public ShopStand GetShop(int index) => _shops[index];
         public int StationCount => _stations.Count;
         public WorkStation GetStation(int index) => _stations[index];
+        public int TownNPCCount => _townNPCs.Count;
+        public TownNPC GetTownNPC(int index) => _townNPCs[index];
 
         private void Awake()
         {
@@ -81,6 +85,7 @@ namespace Rise.Core
             SetupWorkStations();
             SetupShops();
             SetupPartner();
+            SetupTownspeople();
 
             if (Needs != null && loaded != null)
             {
@@ -163,6 +168,17 @@ namespace Rise.Core
             {
                 partner.Configure(_player, this);
                 Partner = partner;
+            }
+        }
+
+        private void SetupTownspeople()
+        {
+            TownNPC[] citizens = FindObjectsByType<TownNPC>(FindObjectsInactive.Include);
+            _townNPCs.Clear();
+            foreach (TownNPC citizen in citizens)
+            {
+                citizen.Configure(_player, this);
+                _townNPCs.Add(citizen);
             }
         }
 
