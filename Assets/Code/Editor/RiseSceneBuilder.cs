@@ -248,7 +248,7 @@ namespace Rise.EditorTools
 
         private static void EnsureLighting()
         {
-            Light sun = Object.FindFirstObjectByType<Light>();
+            Light sun = Object.FindAnyObjectByType<Light>();
             if (sun == null)
             {
                 GameObject sunGO = new GameObject("Directional Light");
@@ -261,7 +261,7 @@ namespace Rise.EditorTools
 
         private static void EnsureCameraBrain()
         {
-            Camera cam = Object.FindFirstObjectByType<Camera>();
+            Camera cam = Object.FindAnyObjectByType<Camera>();
             if (cam == null)
             {
                 GameObject camGO = new GameObject("Main Camera");
@@ -292,7 +292,7 @@ namespace Rise.EditorTools
             RenderSettings.fogMode = FogMode.Exponential;
             RenderSettings.fogDensity = 0.008f;
 
-            Light sun = Object.FindFirstObjectByType<Light>();
+            Light sun = Object.FindAnyObjectByType<Light>();
             if (sun != null)
             {
                 sun.color = new Color(1f, 0.95f, 0.86f);
@@ -768,7 +768,7 @@ namespace Rise.EditorTools
 
         private static GameManager EnsureGameManager()
         {
-            GameManager existing = Object.FindFirstObjectByType<GameManager>();
+            GameManager existing = Object.FindAnyObjectByType<GameManager>();
             if (existing != null) return existing;
 
             GameObject gmGO = new GameObject("GameManager");
@@ -825,7 +825,7 @@ namespace Rise.EditorTools
 
         private static void EnsureShop()
         {
-            ShopStand shop = Object.FindFirstObjectByType<ShopStand>();
+            ShopStand shop = Object.FindAnyObjectByType<ShopStand>();
             if (shop == null)
             {
                 GameObject stand = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -851,7 +851,7 @@ namespace Rise.EditorTools
 
         private static void EnsurePartner()
         {
-            Partner existing = Object.FindFirstObjectByType<Partner>();
+            Partner existing = Object.FindAnyObjectByType<Partner>();
             if (existing != null) return;
 
             GameObject maya = new GameObject("Maya");

@@ -158,7 +158,7 @@ namespace Rise.Core
 
         private void SetupPartner()
         {
-            Partner partner = FindFirstObjectByType<Partner>();
+            Partner partner = FindAnyObjectByType<Partner>();
             if (partner != null)
             {
                 partner.Configure(_player, this);
