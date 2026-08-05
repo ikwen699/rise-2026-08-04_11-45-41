@@ -1242,6 +1242,7 @@ namespace Rise.EditorTools
             EnsurePartner();
             EnsureRival();
             EnsureHUD(gameManager);
+            EnsureDoorTriggers();
 
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
                 UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
@@ -1723,6 +1724,93 @@ namespace Rise.EditorTools
             {
                 playerGO.AddComponent<PlayerNeeds>();
             }
+        }
+
+        private static void EnsureDoorTriggers()
+        {
+            Transform world = GameObject.Find("World").transform;
+            Transform town = world.Find("Town");
+            if (town == null) return;
+
+            Transform doorRoot = world.Find("DoorTriggers");
+            if (doorRoot != null) Object.DestroyImmediate(doorRoot.gameObject);
+            doorRoot = new GameObject("DoorTriggers").transform;
+            doorRoot.SetParent(world);
+
+            struct BuildingInfo
+            {
+                public string name;
+                public Vector3 pos;
+                public float frontZ;
+                public DoorInteractable.InteriorType interiorType;
+            }
+
+            BuildingInfo[] buildings = new BuildingInfo[]
+            {
+                new BuildingInfo { name = "House_01", pos = new Vector3(-16f, 0f, 12f), frontZ = 6f, interiorType = DoorInteractable.InteriorType.House },
+                new BuildingInfo { name = "House_02", pos = new Vector3(-16f, 0f, -12f), frontZ = 6f, interiorType = DoorInteractable.InteriorType.House },
+                new BuildingInfo { name = "Shop_01", pos = new Vector3(12f, 0f, 6f), frontZ = 5f, interiorType = DoorInteractable.InteriorType.Shop },
+                new BuildingInfo { name = "Shop_02", pos = new Vector3(12f, 0f, -14f), frontZ = 5f, interiorType = DoorInteractable.InteriorType.Shop },
+                new BuildingInfo { name = "TownHall", pos = new Vector3(0f, 0f, -30f), frontZ = 7f, interiorType = DoorInteractable.InteriorType.Public },
+                new BuildingInfo { name = "Market_01", pos = new Vector3(20f, 0f, 24f), frontZ = 6f, interiorType = DoorInteractable.InteriorType.Shop },
+                new BuildingInfo { name = "Market_02", pos = new Vector3(-22f, 0f, 24f), frontZ = 6f, interiorType = DoorInteractable.InteriorType.Shop },
+                new BuildingInfo { name = "Church", pos = new Vector3(0f, 0f, 42f), frontZ = 6f, interiorType = DoorInteractable.InteriorType.Church },
+                new BuildingInfo { name = "School", pos = new Vector3(-36f, 0f, 32f), frontZ = 6f, interiorType = DoorInteractable.InteriorType.Public },
+                new BuildingInfo { name = "Bakery", pos = new Vector3(-22f, 0f, 36f), frontZ = 5f, interiorType = DoorInteractable.InteriorType.Shop },
+                new BuildingInfo { name = "Bank", pos = new Vector3(22f, 0f, 36f), frontZ = 5f, interiorType = DoorInteractable.InteriorType.Public },
+                new BuildingInfo { name = "House_03", pos = new Vector3(36f, 0f, 32f), frontZ = 5f, interiorType = DoorInteractable.InteriorType.House },
+                new BuildingInfo { name = "House_04", pos = new Vector3(16f, 0f, 46f), frontZ = 5f, interiorType = DoorInteractable.InteriorType.House },
+                new BuildingInfo { name = "House_05", pos = new Vector3(-16f, 0f, 46f), frontZ = 5f, interiorType = DoorInteractable.InteriorType.House },
+                new BuildingInfo { name = "Restaurant", pos = new Vector3(22f, 0f, -36f), frontZ = 5f, interiorType = DoorInteractable.InteriorType.Shop },
+                new BuildingInfo { name = "PostOffice", pos = new Vector3(-22f, 0f, -36f), frontZ = 5f, interiorType = DoorInteractable.InteriorType.Public },
+                new BuildingInfo { name = "House_06", pos = new Vector3(16f, 0f, -46f), frontZ = 5f, interiorType = DoorInteractable.InteriorType.House },
+                new BuildingInfo { name = "House_07", pos = new Vector3(-16f, 0f, -46f), frontZ = 5f, interiorType = DoorInteractable.InteriorType.House },
+            };
+
+            GameObject playerGO = GameObject.Find("Player");
+            Transform player = playerGO != null ? playerGO.transform : null;
+            Canvas fadeOverlay = Object.FindAnyObjectByType<Canvas>()?.GetComponentInChildren<CanvasGroup>();
+
+            foreach (BuildingInfo b in buildings)
+            {
+                GameObject doorGO = new GameObject("Door_" + b.name);
+                doorGO.transform.SetParent(doorRoot);
+                doorGO.transform.position = new Vector3(b.pos.x, 1.5f, b.pos.z + b.frontZ);
+
+                BoxCollider col = doorGO.AddComponent<BoxCollider>();
+                col.isTrigger = true;
+                col.size = new Vector3(2.5f, 3f, 1.5f);
+
+                DoorInteractable door = doorGO.AddComponent<DoorInteractable>();
+                door.buildingName = b.name;
+                door.interiorType = b.interiorType;
+                door.interiorOffset = new Vector3(b.pos.x, -200f, b.pos.z);
+                door.Configure(player, Object.FindAnyObjectByType<Core.GameManager>(), fadeOverlay);
+
+                GameObject label = new GameObject("Label");
+                label.transform.SetParent(doorGO.transform);
+                label.transform.localPosition = new Vector3(0f, 2f, 0f);
+                label.transform.localScale = Vector3.one * 0.05f;
+                Canvas canvas = label.AddComponent<Canvas>();
+                canvas.renderMode = RenderMode.WorldSpace;
+                RectTransform rt = label.GetComponent<RectTransform>();
+                rt.sizeDelta = new Vector2(4f, 0.6f);
+
+                GameObject textGO = new GameObject("Text");
+                textGO.transform.SetParent(label.transform, false);
+                RectTransform textRT = textGO.AddComponent<RectTransform>();
+                textRT.anchorMin = Vector2.zero;
+                textRT.anchorMax = Vector2.one;
+                textRT.sizeDelta = Vector2.zero;
+                Text text = textGO.AddComponent<Text>();
+                text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                text.fontSize = 28;
+                text.alignment = TextAnchor.MiddleCenter;
+                text.color = new Color(1f, 0.9f, 0.6f);
+                text.text = "[E] Enter " + b.name;
+            }
+
+            Debug.Log("Rise: Door triggers created for " + buildings.Length + " buildings.");
         }
 
         private static void EnsureHUD(GameManager gameManager)

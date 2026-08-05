@@ -21,6 +21,9 @@ namespace Rise.Systems
         public NPCBehavior behavior = NPCBehavior.Route;
         public float wanderRadius = 8f;
         public float standLookInterval = 3f;
+        public string homeBuilding = "";
+        public int homeHourEnter = 18;
+        public int homeHourLeave = 6;
 
         private int _index;
         private float _idleTimer;
@@ -52,6 +55,9 @@ namespace Rise.Systems
         private WalkAnimation _walkAnim;
         private Vector3 _wanderOrigin;
         private float _standLookTimer;
+
+        private bool _isHome;
+        private float _homeCheckTimer;
 
         public bool IsOpen => _isOpen;
         public bool IsPlayerInRange => _playerInRange;
@@ -186,6 +192,24 @@ namespace Rise.Systems
 
             _playerInRange = Vector3.Distance(transform.position, _player.position) <= interactRadius;
 
+            if (!string.IsNullOrEmpty(homeBuilding) && _gameManager != null && _gameManager.Clock != null)
+            {
+                _homeCheckTimer -= Time.deltaTime;
+                if (_homeCheckTimer <= 0f)
+                {
+                    _homeCheckTimer = 2f;
+                    int hour = Mathf.FloorToInt(_gameManager.Clock.HourOfDay) % 24;
+                    if (hour >= homeHourEnter || hour < homeHourLeave)
+                    {
+                        if (!_isHome) GoHome();
+                    }
+                    else
+                    {
+                        if (_isHome) LeaveHome();
+                    }
+                }
+            }
+
             if (_isOpen && !_playerInRange)
             {
                 Close();
@@ -284,6 +308,25 @@ namespace Rise.Systems
             _isOpen = false;
             _lineIndex = 0;
             if (_gameManager.ActiveTownNPC == this) _gameManager.ActiveTownNPC = null;
+        }
+
+        private void GoHome()
+        {
+            _isHome = true;
+            Renderer[] renderers = GetComponentsInChildren<Renderer>();
+            foreach (Renderer r in renderers)
+                r.enabled = false;
+            if (_cc != null) _cc.enabled = false;
+            if (_walkAnim != null) _walkAnim.SetSpeed(0f);
+        }
+
+        private void LeaveHome()
+        {
+            _isHome = false;
+            Renderer[] renderers = GetComponentsInChildren<Renderer>();
+            foreach (Renderer r in renderers)
+                r.enabled = true;
+            if (_cc != null) _cc.enabled = true;
         }
 
         private void OnDrawGizmosSelected()

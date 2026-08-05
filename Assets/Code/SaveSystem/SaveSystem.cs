@@ -28,6 +28,7 @@ namespace Rise.SaveSystem
         public float rivalMoney;
         public float rivalRep;
         public bool rivalDefeated;
+        public string[] ownedProperties;
     }
 
     public static class GameSave

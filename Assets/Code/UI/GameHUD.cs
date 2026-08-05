@@ -61,6 +61,8 @@ namespace Rise.UI
                 if (gameManager.Partner != null) line += "   " + gameManager.Partner.StatusText;
                 if (gameManager.Rep != null) line += "   Rep " + gameManager.Rep.Reputation + " " + gameManager.Rep.GetRepTierText();
                 line += "   Earned $" + gameManager.Jobs.TotalEarned;
+                if (gameManager.Properties != null && gameManager.Properties.GetTotalIncome() > 0)
+                    line += "   Income $" + gameManager.Properties.GetTotalIncome() + "/hr";
 
                 if (gameManager.Quests != null && !gameManager.Quests.AllComplete)
                 {
@@ -182,6 +184,14 @@ namespace Rise.UI
             {
                 hint = "Press E to browse designer clothes";
             }
+            else if (TryNearDoor(out DoorInteractable nearDoor))
+            {
+                PropertyData prop = gameManager.Properties != null ? gameManager.Properties.GetProperty(nearDoor.BuildingName) : null;
+                if (prop != null && !prop.owned)
+                    hint = "Press E to enter " + nearDoor.BuildingName + "  |  Press F to buy for $" + prop.cost;
+                else
+                    hint = "Press E to enter " + nearDoor.BuildingName;
+            }
             else
             {
                 hint = "Press E at a yellow work spot to work";
@@ -246,6 +256,22 @@ namespace Rise.UI
                 if (station.IsPlayerInRange && !station.IsUnlocked)
                 {
                     locked = station;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private bool TryNearDoor(out DoorInteractable nearDoor)
+        {
+            nearDoor = null;
+            DoorInteractable[] doors = Object.FindObjectsByType<DoorInteractable>();
+            foreach (DoorInteractable door in doors)
+            {
+                if (door.isInteriorExit || door.IsInside) continue;
+                if (door.IsPlayerInRange)
+                {
+                    nearDoor = door;
                     return true;
                 }
             }

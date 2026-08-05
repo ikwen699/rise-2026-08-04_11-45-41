@@ -38,6 +38,8 @@ namespace Rise.Core
         public QuestSystem Quests { get; private set; }
         public Rival Rival { get; private set; }
         public PhoneNotifier Phone { get; private set; }
+        public AudioManager Audio { get; private set; }
+        public PropertyManager Properties { get; private set; }
 
         public void EnsureNeeds()
         {
@@ -97,6 +99,8 @@ namespace Rise.Core
             Rival = gameObject.AddComponent<Rival>();
             Rival.Configure(this);
             Phone = gameObject.AddComponent<PhoneNotifier>();
+            Audio = gameObject.AddComponent<AudioManager>();
+            Properties = gameObject.AddComponent<PropertyManager>();
 
             Wallet.OnMoneyChanged += value => OnMoneyChanged?.Invoke(value);
             Clock.OnDayChanged += day => OnDayChanged?.Invoke(day);
@@ -130,6 +134,7 @@ namespace Rise.Core
             SetupCars();
             SetupRival();
             Quests.Configure(this);
+            Properties.Configure(this);
             Phone.Configure(this);
 
             CinemachineCamera[] cms = FindObjectsByType<CinemachineCamera>();
@@ -160,6 +165,10 @@ namespace Rise.Core
             {
                 Rival.ApplySaved(loaded.rivalMoney, loaded.rivalRep, loaded.rivalDefeated);
             }
+            if (Properties != null && loaded != null)
+            {
+                Properties.ApplySaved(loaded.ownedProperties);
+            }
             if (_player != null)
             {
                 PlayerAppearance appearance = _player.GetComponent<PlayerAppearance>();
@@ -176,6 +185,8 @@ namespace Rise.Core
             Clock.Tick(Time.deltaTime);
             UpdateWork(Time.deltaTime);
             UpdateSunlight();
+            UpdateAudio();
+            UpdatePropertyIncome();
         }
 
         private void FindPlayer()
@@ -412,6 +423,28 @@ namespace Rise.Core
             }
         }
 
+        private void UpdateAudio()
+        {
+            if (Audio == null || Clock == null) return;
+            float hour = Clock.HourOfDay;
+            float cycle = (hour - 6f) / 12f;
+            float dayFactor = Mathf.Clamp01(1f - Mathf.Abs(cycle - 0.5f) * 2f);
+            Audio.UpdateCycle(dayFactor);
+        }
+
+        private float _incomeAccumulator;
+        private void UpdatePropertyIncome()
+        {
+            if (Properties == null || Clock == null) return;
+            float gameHours = Time.deltaTime / Clock.SecondsPerGameHour;
+            _incomeAccumulator += gameHours;
+            if (_incomeAccumulator >= 1f)
+            {
+                Properties.CollectIncome(_incomeAccumulator);
+                _incomeAccumulator = 0f;
+            }
+        }
+
         public void ToggleWork(JobDefinition job, WorkStation station)
         {
             if (Jobs.IsWorking)
@@ -477,7 +510,8 @@ namespace Rise.Core
                 questProgress = Quests != null ? Quests.CurrentProgress : 0,
                 rivalMoney = Rival != null ? Rival.RivalMoney : 0f,
                 rivalRep = Rival != null ? Rival.RivalRep : 0f,
-                rivalDefeated = Rival != null && Rival.IsDefeated
+                rivalDefeated = Rival != null && Rival.IsDefeated,
+                ownedProperties = Properties != null ? Properties.GetOwnedNames() : new string[0]
             });
         }
 
