@@ -1769,7 +1769,7 @@ namespace Rise.EditorTools
 
             GameObject playerGO = GameObject.Find("Player");
             Transform player = playerGO != null ? playerGO.transform : null;
-            Canvas fadeOverlay = Object.FindAnyObjectByType<Canvas>()?.GetComponentInChildren<CanvasGroup>();
+            CanvasGroup fadeOverlay = Object.FindAnyObjectByType<Canvas>()?.GetComponentInChildren<CanvasGroup>();
 
             foreach (BuildingInfo b in buildings)
             {
