@@ -162,18 +162,87 @@ namespace Rise.EditorTools
 
         private static void BuildBuilding(Transform parent, string name, Vector3 basePos, Vector3 baseSize, Material wallMat, Material roofMat)
         {
+            Material foundationMat = CreateDetailedMaterial("M_Foundation", new Color(0.35f, 0.33f, 0.30f), 0.04f, 0.6f);
+            Material trimMat = CreateDetailedMaterial("M_Trim_" + name, Color.Lerp(wallMat.color, Color.white, 0.15f), 0.02f, 0.3f);
+            Material frameMat = CreateDetailedMaterial("M_Frame_" + name, new Color(0.90f, 0.87f, 0.82f), 0.01f, 0.35f);
+            Material glassMat = CreateMaterial("M_Glass_" + name, new Color(0.16f, 0.26f, 0.42f, 0.85f));
+            Material doorMat = CreateDetailedMaterial("M_Door_" + name, new Color(0.32f, 0.20f, 0.10f), 0.03f, 0.25f);
+            Material stepMat = CreateDetailedMaterial("M_Step_" + name, new Color(0.55f, 0.53f, 0.50f), 0.03f, 0.5f);
+            Material chimneyMat = CreateDetailedMaterial("M_Chimney_" + name, new Color(0.45f, 0.22f, 0.12f), 0.05f, 0.2f);
+            Material awningMat = CreateMaterial("M_Awning_" + name, new Color(0.75f, 0.20f, 0.15f));
+            Material windowFrameMat = CreateDetailedMaterial("M_WinFrame_" + name, new Color(0.88f, 0.85f, 0.80f), 0.01f, 0.3f);
+
+            float foundationH = 0.6f;
+            GameObject foundation = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            foundation.name = name + "_Foundation";
+            foundation.transform.SetParent(parent);
+            foundation.transform.position = basePos + Vector3.up * (foundationH * 0.5f);
+            foundation.transform.localScale = new Vector3(baseSize.x + 0.6f, foundationH, baseSize.z + 0.6f);
+            SetRendererMaterial(foundation, foundationMat);
+            Object.DestroyImmediate(foundation.GetComponent<Collider>());
+
             GameObject body = GameObject.CreatePrimitive(PrimitiveType.Cube);
             body.name = name + "_Body";
             body.transform.SetParent(parent);
             body.transform.position = basePos + Vector3.up * (baseSize.y * 0.5f);
             body.transform.localScale = baseSize;
             SetRendererMaterial(body, wallMat);
+            Object.DestroyImmediate(body.GetComponent<Collider>());
+
+            float corniceH = 0.25f;
+            float corniceY = basePos.y + baseSize.y - corniceH * 0.5f;
+            float fx = baseSize.x * 0.5f + 0.15f;
+            float fz = baseSize.z * 0.5f + 0.15f;
+
+            AddPrim(parent, name + "_CorniceFront", new Vector3(basePos.x, corniceY, basePos.z + fz), new Vector3(baseSize.x + 0.4f, corniceH, 0.2f), trimMat);
+            AddPrim(parent, name + "_CorniceBack", new Vector3(basePos.x, corniceY, basePos.z - fz), new Vector3(baseSize.x + 0.4f, corniceH, 0.2f), trimMat);
+            AddPrim(parent, name + "_CorniceLeft", new Vector3(basePos.x - fx, corniceY, basePos.z), new Vector3(0.2f, corniceH, baseSize.z + 0.4f), trimMat);
+            AddPrim(parent, name + "_CorniceRight", new Vector3(basePos.x + fx, corniceY, basePos.z), new Vector3(0.2f, corniceH, baseSize.z + 0.4f), trimMat);
 
             BuildGableRoof(parent, name, basePos, baseSize, roofMat, name == "TownHall" ? 2.5f : 1.6f);
 
-            Material windowMat = CreateMaterial("M_Window", new Color(0.16f, 0.26f, 0.42f));
-            Material doorMat = CreateMaterial("M_Door", new Color(0.32f, 0.20f, 0.10f));
-            AddWindowsAndDoor(parent, name, basePos, baseSize, windowMat, doorMat);
+            bool hasChimney = name.Contains("House") || name == "TownHall";
+            if (hasChimney)
+            {
+                GameObject chimney = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                chimney.name = name + "_Chimney";
+                chimney.transform.SetParent(parent);
+                chimney.transform.position = new Vector3(basePos.x + baseSize.x * 0.25f, basePos.y + baseSize.y + 1.0f, basePos.z - baseSize.z * 0.2f);
+                chimney.transform.localScale = new Vector3(0.8f, 1.8f, 0.8f);
+                SetRendererMaterial(chimney, chimneyMat);
+                Object.DestroyImmediate(chimney.GetComponent<Collider>());
+            }
+
+            AddWindowsAndDoorEnhanced(parent, name, basePos, baseSize, windowFrameMat, glassMat, doorMat, stepMat);
+
+            bool isStorefront = name.Contains("Shop") || name.Contains("Market");
+            if (isStorefront)
+            {
+                float halfZ = baseSize.z * 0.5f;
+                float awningY = basePos.y + baseSize.y * 0.85f;
+                float awningW = baseSize.x * 0.7f;
+                float awningD = 1.5f;
+                float awningAngle = -12f;
+
+                GameObject awning = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                awning.name = name + "_Awning";
+                awning.transform.SetParent(parent);
+                awning.transform.position = new Vector3(basePos.x, awningY, basePos.z + halfZ + awningD * 0.45f);
+                awning.transform.localScale = new Vector3(awningW, 0.12f, awningD);
+                awning.transform.rotation = Quaternion.Euler(awningAngle, 0f, 0f);
+                SetRendererMaterial(awning, awningMat);
+                Object.DestroyImmediate(awning.GetComponent<Collider>());
+
+                Material awningStripeMat = CreateMaterial("M_AwningStripe_" + name, Color.white);
+                GameObject stripe = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                stripe.name = name + "_AwningStripe";
+                stripe.transform.SetParent(awning.transform);
+                stripe.transform.localPosition = new Vector3(0f, 0.02f, 0.3f);
+                stripe.transform.localScale = new Vector3(1f, 0.6f, 0.3f);
+                stripe.transform.localRotation = Quaternion.identity;
+                SetRendererMaterial(stripe, awningStripeMat);
+                Object.DestroyImmediate(stripe.GetComponent<Collider>());
+            }
         }
 
         private static void BuildGableRoof(Transform parent, string name, Vector3 basePos, Vector3 baseSize, Material mat, float rise)
@@ -202,27 +271,52 @@ namespace Rise.EditorTools
             SetRendererMaterial(ridge, mat);
         }
 
-        private static void AddWindowsAndDoor(Transform parent, string name, Vector3 basePos, Vector3 baseSize, Material windowMat, Material doorMat)
+        private static void AddWindowsAndDoorEnhanced(Transform parent, string name, Vector3 basePos, Vector3 baseSize,
+            Material frameMat, Material glassMat, Material doorMat, Material stepMat)
         {
             Vector3 half = baseSize * 0.5f;
             float inset = 0.05f;
             float winY = basePos.y + baseSize.y * 0.55f;
-            float winH = baseSize.y * 0.26f;
+            float winH = baseSize.y * 0.28f;
             float winW = baseSize.x * 0.22f;
             float sideW = baseSize.z * 0.22f;
+            float frameP = 0.12f;
+            float winDepth = 0.15f;
 
             for (int side = -1; side <= 1; side += 2)
             {
                 float z = basePos.z + (side > 0 ? half.z + inset : -half.z - inset);
-                AddPrim(parent, name + "_Window", new Vector3(basePos.x - baseSize.x * 0.26f, winY, z), new Vector3(winW, winH, 0.15f), windowMat);
-                AddPrim(parent, name + "_Window", new Vector3(basePos.x + baseSize.x * 0.26f, winY, z), new Vector3(winW, winH, 0.15f), windowMat);
-                AddPrim(parent, name + "_WindowSide", new Vector3(basePos.x - half.x - inset, winY, basePos.z - baseSize.z * 0.2f), new Vector3(0.15f, winH, sideW), windowMat);
-                AddPrim(parent, name + "_WindowSide", new Vector3(basePos.x + half.x + inset, winY, basePos.z + baseSize.z * 0.2f), new Vector3(0.15f, winH, sideW), windowMat);
+                Vector3[] frontWins =
+                {
+                    new Vector3(basePos.x - baseSize.x * 0.26f, winY, z),
+                    new Vector3(basePos.x + baseSize.x * 0.26f, winY, z)
+                };
+                foreach (Vector3 wpos in frontWins)
+                {
+                    AddPrim(parent, name + "_WinFrame", wpos, new Vector3(winW + frameP, winH + frameP, winDepth + 0.04f), frameMat);
+                    AddPrim(parent, name + "_WinGlass", wpos, new Vector3(winW, winH, winDepth), glassMat);
+                }
+
+                Vector3[] sideWins =
+                {
+                    new Vector3(basePos.x - half.x - inset, winY, basePos.z - baseSize.z * 0.2f),
+                    new Vector3(basePos.x + half.x + inset, winY, basePos.z + baseSize.z * 0.2f)
+                };
+                foreach (Vector3 wpos in sideWins)
+                {
+                    AddPrim(parent, name + "_WinFrameSide", wpos, new Vector3(winDepth + 0.04f, winH + frameP, sideW + frameP), frameMat);
+                    AddPrim(parent, name + "_WinGlassSide", wpos, new Vector3(winDepth, winH, sideW), glassMat);
+                }
             }
 
             float doorW = Mathf.Min(1.8f, baseSize.x * 0.3f);
             float doorH = Mathf.Min(3.4f, baseSize.y * 0.72f);
-            AddPrim(parent, name + "_Door", new Vector3(basePos.x, basePos.y + doorH * 0.5f, basePos.z + half.z + inset), new Vector3(doorW, doorH, 0.15f), doorMat);
+            float doorZ = basePos.z + half.z + inset;
+            AddPrim(parent, name + "_DoorFrame", new Vector3(basePos.x, basePos.y + doorH * 0.5f, doorZ), new Vector3(doorW + 0.25f, doorH + 0.2f, 0.12f), frameMat);
+            AddPrim(parent, name + "_DoorPanel", new Vector3(basePos.x, basePos.y + doorH * 0.5f, doorZ + 0.02f), new Vector3(doorW, doorH, 0.15f), doorMat);
+            AddPrim(parent, name + "_DoorStep", new Vector3(basePos.x, basePos.y + 0.12f, doorZ + 0.7f), new Vector3(doorW + 0.6f, 0.24f, 0.8f), stepMat);
+
+            AddPrim(parent, name + "_Knob", new Vector3(basePos.x + doorW * 0.35f, basePos.y + doorH * 0.45f, doorZ + 0.1f), new Vector3(0.08f, 0.08f, 0.06f), frameMat);
         }
 
         private static void BuildPlayerRig()
@@ -881,25 +975,41 @@ namespace Rise.EditorTools
 
             GameObject armPivotL = new GameObject("ArmPivot_L");
             armPivotL.transform.SetParent(root.transform);
-            armPivotL.transform.localPosition = new Vector3(-0.38f * s, 1.28f * s, 0f);
+            armPivotL.transform.localPosition = new Vector3(-0.27f * s, 1.28f * s, 0f);
             GameObject armL = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             armL.name = "Arm_L";
             armL.transform.SetParent(armPivotL.transform);
-            armL.transform.localPosition = new Vector3(0f, -0.23f * s, 0f);
-            armL.transform.localScale = new Vector3(0.14f * s, 0.38f * s, 0.14f * s);
+            armL.transform.localPosition = new Vector3(0f, -0.22f * s, 0f);
+            armL.transform.localScale = new Vector3(0.15f * s, 0.38f * s, 0.15f * s);
             Object.DestroyImmediate(armL.GetComponent<Collider>());
             SetRendererMaterial(armL, shirt);
 
+            GameObject handL = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            handL.name = "Hand_L";
+            handL.transform.SetParent(armPivotL.transform);
+            handL.transform.localPosition = new Vector3(0f, -0.60f * s, 0f);
+            handL.transform.localScale = Vector3.one * 0.14f * s;
+            Object.DestroyImmediate(handL.GetComponent<Collider>());
+            SetRendererMaterial(handL, skin);
+
             GameObject armPivotR = new GameObject("ArmPivot_R");
             armPivotR.transform.SetParent(root.transform);
-            armPivotR.transform.localPosition = new Vector3(0.38f * s, 1.28f * s, 0f);
+            armPivotR.transform.localPosition = new Vector3(0.27f * s, 1.28f * s, 0f);
             GameObject armR = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             armR.name = "Arm_R";
             armR.transform.SetParent(armPivotR.transform);
-            armR.transform.localPosition = new Vector3(0f, -0.23f * s, 0f);
-            armR.transform.localScale = new Vector3(0.14f * s, 0.38f * s, 0.14f * s);
+            armR.transform.localPosition = new Vector3(0f, -0.22f * s, 0f);
+            armR.transform.localScale = new Vector3(0.15f * s, 0.38f * s, 0.15f * s);
             Object.DestroyImmediate(armR.GetComponent<Collider>());
             SetRendererMaterial(armR, shirt);
+
+            GameObject handR = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            handR.name = "Hand_R";
+            handR.transform.SetParent(armPivotR.transform);
+            handR.transform.localPosition = new Vector3(0f, -0.60f * s, 0f);
+            handR.transform.localScale = Vector3.one * 0.14f * s;
+            Object.DestroyImmediate(handR.GetComponent<Collider>());
+            SetRendererMaterial(handR, skin);
 
             return root.transform;
         }

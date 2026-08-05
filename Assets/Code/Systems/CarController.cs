@@ -25,6 +25,7 @@ namespace Rise.Systems
         private static InputAction s_moveAction;
         private static InputAction s_brakeAction;
         private static bool s_actionsCreated;
+        private static bool s_eConsumedThisFrame;
 
         public bool IsDriving => _isDriving;
         public bool IsPlayerInRange => _playerInRange;
@@ -55,12 +56,19 @@ namespace Rise.Systems
 
             _playerInRange = Vector3.Distance(transform.position, _player.position) <= interactRadius;
 
-            bool ePressed = Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame;
+            bool rawE = Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame;
+            bool ePressed = rawE && !s_eConsumedThisFrame;
 
             if (_isDriving)
             {
+                if (_gameManager.ActiveCar != this)
+                {
+                    ForceStopDriving();
+                    return;
+                }
                 if (ePressed)
                 {
+                    s_eConsumedThisFrame = true;
                     StopDriving();
                     return;
                 }
@@ -68,11 +76,17 @@ namespace Rise.Systems
             }
             else
             {
-                if (ePressed && _playerInRange && !IsLocked(_gameManager))
+                if (ePressed && _playerInRange && !IsLocked(_gameManager) && _gameManager.ActiveCar == null)
                 {
+                    s_eConsumedThisFrame = true;
                     StartDriving();
                 }
             }
+        }
+
+        private void LateUpdate()
+        {
+            s_eConsumedThisFrame = false;
         }
 
         private void StartDriving()
@@ -94,6 +108,16 @@ namespace Rise.Systems
             if (s_brakeAction != null) s_brakeAction.Disable();
             Debug.Log("[CarController] Stopped driving " + brandName);
             _gameManager.ExitCar();
+        }
+
+        public void ForceStopDriving()
+        {
+            if (!_isDriving) return;
+            _isDriving = false;
+            _currentSpeed = 0f;
+            if (s_moveAction != null) s_moveAction.Disable();
+            if (s_brakeAction != null) s_brakeAction.Disable();
+            Debug.Log("[CarController] Force-stopped " + brandName);
         }
 
         private void Drive()

@@ -249,6 +249,10 @@ namespace Rise.Core
 
         public void EnterCar(CarController car)
         {
+            if (ActiveCar != null && ActiveCar != car && ActiveCar.IsDriving)
+            {
+                ActiveCar.ForceStopDriving();
+            }
             ActiveCar = car;
             if (_player != null)
             {
