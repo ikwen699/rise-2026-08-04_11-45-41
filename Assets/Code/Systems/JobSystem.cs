@@ -5,8 +5,6 @@ namespace Rise.Systems
 {
     public class JobSystem : MonoBehaviour
     {
-        public class JobSystem : MonoBehaviour
-    {
         public bool IsWorking { get; private set; }
         public JobDefinition CurrentJob { get; private set; }
         public Core.WorkStation CurrentStation { get; private set; }
