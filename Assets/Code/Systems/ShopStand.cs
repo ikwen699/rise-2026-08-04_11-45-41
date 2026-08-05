@@ -116,7 +116,7 @@ namespace Rise.Systems
                 {
                     case ShopItemType.Food:
                         _gameManager.Needs.AddFood();
-                        SetMessage("Bought " + item.itemName + " x1  (press Q to eat)");
+                        SetMessage("Bought " + item.itemName + " — Food x" + _gameManager.Needs.FoodCount + "  (press Q to eat)");
                         break;
                     case ShopItemType.GiftFlower:
                         _gameManager.Needs.AddGift(ShopItemType.GiftFlower);
@@ -158,7 +158,8 @@ namespace Rise.Systems
                 else if (items[i].itemType != ShopItemType.Item) tag = "  (gift)";
                 sb.AppendLine((i + 1) + ". " + items[i].itemName + "   $" + items[i].price + tag);
             }
-            sb.Append("Press 1-" + Mathf.Min(items.Count, 9) + " to buy   E to close");
+            int foodCount = _gameManager != null && _gameManager.Needs != null ? _gameManager.Needs.FoodCount : 0;
+            sb.AppendLine("Food x" + foodCount + "   Press 1-" + Mathf.Min(items.Count, 9) + " to buy   E to close");
 
             if (_messageTimer > 0f)
             {
