@@ -4,6 +4,7 @@ using UnityEngine;
 using Unity.Cinemachine;
 using Rise.SaveSystem;
 using Rise.Systems;
+using Rise.UI;
 
 namespace Rise.Core
 {
@@ -34,6 +35,9 @@ namespace Rise.Core
         public JobSystem Jobs { get; private set; }
         public PlayerNeeds Needs { get; private set; }
         public ReputationSystem Rep { get; private set; }
+        public QuestSystem Quests { get; private set; }
+        public Rival Rival { get; private set; }
+        public PhoneNotifier Phone { get; private set; }
 
         public void EnsureNeeds()
         {
@@ -53,9 +57,12 @@ namespace Rise.Core
         private readonly List<TownNPC> _townNPCs = new List<TownNPC>();
         private readonly List<ClothingStand> _clothingShops = new List<ClothingStand>();
         private readonly List<CarController> _cars = new List<CarController>();
+        private readonly List<Light> _lampLights = new List<Light>();
+        private readonly List<float> _lampBaseIntensities = new List<float>();
         private float _jobEarnAccumulator;
         private Transform _player;
         private Light _sun;
+        private Light _moon;
         private CinemachineCamera _cmCamera;
         private Transform _cmFollow;
         private Transform _cmLookAt;
@@ -86,12 +93,20 @@ namespace Rise.Core
             Jobs = gameObject.AddComponent<JobSystem>();
             Rep = gameObject.AddComponent<ReputationSystem>();
             Rep.Configure(this);
+            Quests = gameObject.AddComponent<QuestSystem>();
+            Rival = gameObject.AddComponent<Rival>();
+            Rival.Configure(this);
+            Phone = gameObject.AddComponent<PhoneNotifier>();
 
             Wallet.OnMoneyChanged += value => OnMoneyChanged?.Invoke(value);
             Clock.OnDayChanged += day => OnDayChanged?.Invoke(day);
             Clock.OnTimeAdvanced += () => OnTimeAdvanced?.Invoke();
             Clock.OnDayChanged += _ => SaveNow();
             Jobs.OnWorkingChanged += (job, working) => OnWorkingChanged?.Invoke(job, working);
+
+            Wallet.OnMoneyChanged += val => Phone?.Push("Money", "You now have $" + val);
+            Clock.OnDayChanged += day => Phone?.Push("Day " + day, "A new day begins.");
+            Rep.OnReputationChanged += rep => Phone?.Push("Reputation", "Rep is now " + rep + " — " + Rep.GetRepTierText());
 
             Wallet.SetMoney(startingMoney);
             Clock.Configure(secondsPerGameHour, startingDay, startingHour);
@@ -106,12 +121,16 @@ namespace Rise.Core
 
             FindPlayer();
             FindSun();
+            FindLamps();
             SetupWorkStations();
             SetupShops();
             SetupClothingShops();
             SetupPartner();
             SetupTownspeople();
             SetupCars();
+            SetupRival();
+            Quests.Configure(this);
+            Phone.Configure(this);
 
             CinemachineCamera[] cms = FindObjectsByType<CinemachineCamera>();
             if (cms.Length > 0) _cmCamera = cms[0];
@@ -132,6 +151,14 @@ namespace Rise.Core
             if (Rep != null && loaded != null)
             {
                 Rep.ApplySaved(loaded.reputation);
+            }
+            if (Quests != null && loaded != null)
+            {
+                Quests.ApplySaved(loaded.questIndex, loaded.questProgress);
+            }
+            if (Rival != null && loaded != null)
+            {
+                Rival.ApplySaved(loaded.rivalMoney, loaded.rivalRep, loaded.rivalDefeated);
             }
             if (_player != null)
             {
@@ -176,8 +203,25 @@ namespace Rise.Core
             {
                 if (light.type == LightType.Directional)
                 {
-                    _sun = light;
-                    break;
+                    if (light.gameObject.name.Contains("Moon"))
+                        _moon = light;
+                    else
+                        _sun = light;
+                }
+            }
+        }
+
+        private void FindLamps()
+        {
+            _lampLights.Clear();
+            _lampBaseIntensities.Clear();
+            Light[] allLights = FindObjectsByType<Light>();
+            foreach (Light light in allLights)
+            {
+                if (light.type == LightType.Point && light.gameObject.name == "Lamp_Light")
+                {
+                    _lampLights.Add(light);
+                    _lampBaseIntensities.Add(light.intensity);
                 }
             }
         }
@@ -247,6 +291,16 @@ namespace Rise.Core
             }
         }
 
+        private void SetupRival()
+        {
+            Rival rival = FindAnyObjectByType<Rival>();
+            if (rival != null)
+            {
+                rival.Configure(this);
+                Rival = rival;
+            }
+        }
+
         public void EnterCar(CarController car)
         {
             if (ActiveCar != null && ActiveCar != car && ActiveCar.IsDriving)
@@ -310,9 +364,52 @@ namespace Rise.Core
         {
             if (_sun == null) return;
 
-            float cycle = (Clock.HourOfDay - 6f) / 12f;
-            float factor = Mathf.Clamp01(1f - Mathf.Abs(cycle - 0.5f) * 2f);
-            _sun.intensity = Mathf.Lerp(nightIntensity, dayIntensity, factor);
+            float hour = Clock.HourOfDay;
+            float cycle = (hour - 6f) / 12f;
+            float dayFactor = Mathf.Clamp01(1f - Mathf.Abs(cycle - 0.5f) * 2f);
+
+            float sunElevation = Mathf.Lerp(10f, 70f, dayFactor);
+            _sun.transform.rotation = Quaternion.Euler(sunElevation, -30f, 0f);
+
+            Color nightSun = new Color(0.2f, 0.25f, 0.35f);
+            Color dawnSun = new Color(1f, 0.6f, 0.3f);
+            Color daySun = new Color(1f, 0.95f, 0.85f);
+            _sun.intensity = Mathf.Lerp(nightIntensity, dayIntensity, dayFactor);
+            if (dayFactor > 0.1f && dayFactor < 0.5f)
+                _sun.color = Color.Lerp(dawnSun, daySun, (dayFactor - 0.1f) / 0.4f);
+            else if (dayFactor <= 0.1f)
+                _sun.color = Color.Lerp(nightSun, dawnSun, dayFactor / 0.1f);
+            else
+                _sun.color = daySun;
+
+            Material sky = RenderSettings.skybox;
+            if (sky != null)
+            {
+                sky.SetColor("_SkyTint", Color.Lerp(new Color(0.1f, 0.15f, 0.3f), new Color(0.48f, 0.6f, 0.85f), dayFactor));
+                sky.SetFloat("_Exposure", Mathf.Lerp(0.3f, 1.15f, dayFactor));
+                sky.SetFloat("_AtmosphereThickness", Mathf.Lerp(1.2f, 1.05f, dayFactor));
+            }
+
+            RenderSettings.ambientSkyColor = Color.Lerp(new Color(0.05f, 0.06f, 0.1f), new Color(0.72f, 0.78f, 0.9f), dayFactor);
+            RenderSettings.ambientEquatorColor = Color.Lerp(new Color(0.03f, 0.03f, 0.05f), new Color(0.62f, 0.63f, 0.64f), dayFactor);
+            RenderSettings.ambientGroundColor = Color.Lerp(new Color(0.02f, 0.02f, 0.03f), new Color(0.5f, 0.48f, 0.44f), dayFactor);
+            RenderSettings.fogColor = Color.Lerp(new Color(0.05f, 0.06f, 0.1f), new Color(0.82f, 0.86f, 0.92f), dayFactor);
+
+            float nightFactor = 1f - dayFactor;
+            for (int i = 0; i < _lampLights.Count; i++)
+            {
+                Light lamp = _lampLights[i];
+                if (lamp == null) continue;
+                float targetIntensity = nightFactor > 0.3f ? _lampBaseIntensities[i] : 0f;
+                lamp.intensity = Mathf.Lerp(lamp.intensity, targetIntensity, Time.deltaTime * 3f);
+                lamp.enabled = lamp.intensity > 0.01f;
+            }
+
+            if (_moon != null)
+            {
+                _moon.intensity = Mathf.Lerp(0.4f, 0f, dayFactor);
+                _moon.enabled = nightFactor > 0.2f;
+            }
         }
 
         public void ToggleWork(JobDefinition job, WorkStation station)
@@ -375,7 +472,12 @@ namespace Rise.Core
                 childSpawned = Partner != null && Partner.ChildSpawned,
                 totalEarned = Jobs.TotalEarned,
                 outfitIndex = outfitIdx,
-                reputation = Rep != null ? Rep.Reputation : 0
+                reputation = Rep != null ? Rep.Reputation : 0,
+                questIndex = Quests != null ? Quests.CurrentIndex : 0,
+                questProgress = Quests != null ? Quests.CurrentProgress : 0,
+                rivalMoney = Rival != null ? Rival.RivalMoney : 0f,
+                rivalRep = Rival != null ? Rival.RivalRep : 0f,
+                rivalDefeated = Rival != null && Rival.IsDefeated
             });
         }
 

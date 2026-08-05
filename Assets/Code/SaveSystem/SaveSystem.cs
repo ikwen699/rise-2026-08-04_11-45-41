@@ -23,6 +23,11 @@ namespace Rise.SaveSystem
         public int totalEarned;
         public int outfitIndex;
         public int reputation;
+        public int questIndex;
+        public int questProgress;
+        public float rivalMoney;
+        public float rivalRep;
+        public bool rivalDefeated;
     }
 
     public static class GameSave

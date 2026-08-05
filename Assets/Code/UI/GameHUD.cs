@@ -13,6 +13,7 @@ namespace Rise.UI
         [SerializeField] private Text workText;
         [SerializeField] private Text needsText;
         [SerializeField] private Text shopText;
+        [SerializeField] private Text phoneText;
         [SerializeField] private GameManager gameManager;
 
         private void Start()
@@ -37,7 +38,7 @@ namespace Rise.UI
             gameManager.OnTimeAdvanced -= HandleTime;
         }
 
-        public void Configure(GameManager manager, Text money, Text time, Text day, Text work, Text needs, Text shop)
+        public void Configure(GameManager manager, Text money, Text time, Text day, Text work, Text needs, Text shop, Text phone)
         {
             gameManager = manager;
             moneyText = money;
@@ -46,6 +47,7 @@ namespace Rise.UI
             workText = work;
             needsText = needs;
             shopText = shop;
+            phoneText = phone;
         }
 
         private void Update()
@@ -59,7 +61,28 @@ namespace Rise.UI
                 if (gameManager.Partner != null) line += "   " + gameManager.Partner.StatusText;
                 if (gameManager.Rep != null) line += "   Rep " + gameManager.Rep.Reputation + " " + gameManager.Rep.GetRepTierText();
                 line += "   Earned $" + gameManager.Jobs.TotalEarned;
+
+                if (gameManager.Quests != null && !gameManager.Quests.AllComplete)
+                {
+                    QuestDefinition q = gameManager.Quests.GetCurrentQuest();
+                    if (q != null)
+                        line += "\n[Quest] " + q.QuestName + ": " + q.GetProgressText(gameManager);
+                }
+
+                if (gameManager.Rival != null && !gameManager.Rival.IsDefeated)
+                {
+                    int diff = gameManager.Wallet.Money - Mathf.RoundToInt(gameManager.Rival.RivalMoney);
+                    string rivalStatus = diff >= 0 ? "Ahead by $" + diff : "Behind by $" + Mathf.Abs(diff);
+                    line += "\n[Rival] " + gameManager.Rival.RivalName + " — " + rivalStatus;
+                }
+
                 SetText(needsText, line);
+            }
+
+            if (gameManager.Phone != null)
+            {
+                string phoneContent = gameManager.Phone.GetNotificationText();
+                SetText(phoneText, phoneContent);
             }
 
             ShopStand shop = gameManager.ActiveShop;
@@ -98,6 +121,20 @@ namespace Rise.UI
                 if (workText != null) workText.text = "";
                 return;
             }
+
+            if (gameManager.Rival != null && !gameManager.Rival.IsDefeated && gameManager.Rival.IsPlayerInRange && !gameManager.Rival.IsOpen)
+            {
+                SetText(shopText, gameManager.Rival.GetDialogueText());
+                if (workText != null) workText.text = "";
+                return;
+            }
+            if (gameManager.Rival != null && gameManager.Rival.IsOpen)
+            {
+                SetText(shopText, gameManager.Rival.GetDialogueText());
+                if (workText != null) workText.text = "";
+                return;
+            }
+
             if (shopText != null && shopText.text.Length > 0) shopText.text = "";
 
             string hint;
@@ -128,6 +165,10 @@ namespace Rise.UI
             else if (TryGetTalkableNPC(out TownNPC talkNPC))
             {
                 hint = "Press E to talk to " + talkNPC.npcName;
+            }
+            else if (gameManager.Rival != null && !gameManager.Rival.IsDefeated && gameManager.Rival.IsPlayerInRange)
+            {
+                hint = "Press E to talk to " + gameManager.Rival.RivalName;
             }
             else if (TryGetLockedStation(out WorkStation locked))
             {

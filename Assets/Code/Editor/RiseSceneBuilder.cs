@@ -454,6 +454,17 @@ namespace Rise.EditorTools
                 sun.type = LightType.Directional;
             }
             sun.shadows = LightShadows.Soft;
+
+            if (Object.FindAnyObjectByType<Light>(l => l.gameObject.name == "Moon Light") == null)
+            {
+                GameObject moonGO = new GameObject("Moon Light");
+                moonGO.transform.rotation = Quaternion.Euler(200f, 30f, 0f);
+                Light moon = moonGO.AddComponent<Light>();
+                moon.type = LightType.Directional;
+                moon.color = new Color(0.5f, 0.55f, 0.7f);
+                moon.intensity = 0.4f;
+                moon.shadows = LightShadows.None;
+            }
         }
 
         private static void EnsureCameraBrain()
@@ -1223,6 +1234,7 @@ namespace Rise.EditorTools
             EnsureShop();
             EnsureClothingShop();
             EnsurePartner();
+            EnsureRival();
             EnsureHUD(gameManager);
 
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
@@ -1677,6 +1689,26 @@ namespace Rise.EditorTools
             partner.skinMaterial = CreateMaterial("M_Skin_Maya", new Color(0.93f, 0.82f, 0.72f));
         }
 
+        private static void EnsureRival()
+        {
+            Rival existing = Object.FindAnyObjectByType<Rival>();
+            if (existing != null) Object.DestroyImmediate(existing.gameObject);
+
+            Transform rivalRoot = BuildHumanoid(null, "Marcus_Blackwood", new Vector3(-10f, 0f, -20f),
+                new Color(0.85f, 0.72f, 0.62f),
+                new Color(0.15f, 0.15f, 0.2f),
+                new Color(0.25f, 0.25f, 0.3f),
+                new Color(0.1f, 0.08f, 0.06f),
+                1.1f);
+
+            CharacterController cc = rivalRoot.gameObject.AddComponent<CharacterController>();
+            cc.height = 2.1f;
+            cc.radius = 0.4f;
+            cc.center = new Vector3(0f, 1.05f, 0f);
+
+            rivalRoot.gameObject.AddComponent<Rival>();
+        }
+
         private static void EnsurePlayerNeeds()
         {
             GameObject playerGO = GameObject.Find("Player");
@@ -1707,9 +1739,10 @@ namespace Rise.EditorTools
             Text work = CreateHudText("Work", canvasGO.transform, new Vector2(0.5f, 0.04f), new Vector2(0.5f, 0f), 34, TextAnchor.LowerCenter);
             Text needs = CreateHudText("Needs", canvasGO.transform, new Vector2(0.02f, 0.71f), new Vector2(0f, 1f), 40, TextAnchor.UpperLeft);
             Text shop = CreateHudText("ShopMenu", canvasGO.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), 38, TextAnchor.MiddleCenter);
+            Text phone = CreateHudText("Phone", canvasGO.transform, new Vector2(0.98f, 0.97f), new Vector2(1f, 1f), 32, TextAnchor.UpperRight);
 
             GameHUD hud = canvasGO.AddComponent<GameHUD>();
-            hud.Configure(gameManager, money, time, day, work, needs, shop);
+            hud.Configure(gameManager, money, time, day, work, needs, shop, phone);
         }
 
         private static Text CreateHudText(string name, Transform parent, Vector2 anchor, Vector2 pivot, int size, TextAnchor align)
@@ -1794,6 +1827,16 @@ namespace Rise.EditorTools
             Material rimMat = CreateMaterial("M_CarRim", new Color(0.75f, 0.77f, 0.8f));
 
             bool isSUV = brand == "Range Rover";
+            bool isCoupe = brand == "Tesla" || brand == "Lexus";
+            string modelType = isSUV ? "car_suv" : (isCoupe ? "car_coupe" : "car_sedan");
+            string fbxPath = "Assets/Models/Cars/" + modelType + ".fbx";
+            GameObject fbxModel = AssetDatabase.LoadAssetAtPath<GameObject>(fbxPath);
+
+            if (fbxModel != null)
+            {
+                BuildFBXCar(parent, brand, color, minRep, position, fbxModel, isSUV, isCoupe, bodyMat, glassMat, wheelMat, headlightMat, taillightMat, tireMat, rimMat);
+                return;
+            }
             bool isCoupe = brand == "Tesla" || brand == "Lexus";
 
             float carW = isSUV ? 2f : 1.85f;
@@ -2010,6 +2053,166 @@ namespace Rise.EditorTools
             label.color = Color.white;
             label.text = brand;
             label.horizontalOverflow = HorizontalWrapMode.Overflow;
+
+            CarController cc = car.AddComponent<CarController>();
+            cc.brandName = brand;
+            cc.brandColor = color;
+            cc.minRep = minRep;
+        }
+
+        private static void BuildFBXCar(Transform parent, string brand, Color color, int minRep, Vector3 position,
+            GameObject fbxModel, bool isSUV, bool isCoupe, Material bodyMat, Material glassMat, Material wheelMat,
+            Material headlightMat, Material taillightMat, Material tireMat, Material rimMat)
+        {
+            float carW = isSUV ? 2f : 1.85f;
+            float carL = isSUV ? 4.6f : (isCoupe ? 4.2f : 4.4f);
+            float rideH = isSUV ? 0.45f : 0.3f;
+
+            GameObject car = new GameObject(brand);
+            car.transform.SetParent(parent);
+            car.transform.position = position;
+
+            GameObject model = (GameObject)PrefabUtility.InstantiatePrefab(fbxModel, car.transform);
+            model.transform.localPosition = Vector3.zero;
+            model.transform.localRotation = Quaternion.identity;
+
+            Renderer[] renderers = model.GetComponentsInChildren<Renderer>();
+            Bounds totalBounds = new Bounds(model.transform.position, Vector3.zero);
+            foreach (Renderer r in renderers)
+            {
+                totalBounds.Encapsulate(r.bounds);
+            }
+
+            float modelLength = totalBounds.size.z;
+            float modelWidth = totalBounds.size.x;
+            float modelHeight = totalBounds.size.y;
+            float scaleX = carW / Mathf.Max(modelWidth, 0.1f);
+            float scaleZ = carL / Mathf.Max(modelLength, 0.1f);
+            float uniformScale = Mathf.Min(scaleX, scaleZ);
+            model.transform.localScale = Vector3.one * uniformScale;
+
+            float groundOffset = -totalBounds.min.y * uniformScale + rideH;
+            model.transform.localPosition = new Vector3(0f, groundOffset, 0f);
+
+            foreach (Renderer r in renderers)
+            {
+                Object.DestroyImmediate(r.GetComponent<Collider>());
+                string rName = r.gameObject.name.ToLower();
+                if (rName.Contains("wheel") || rName.Contains("tire"))
+                    r.sharedMaterial = tireMat;
+                else if (rName.Contains("glass") || rName.Contains("window") || rName.Contains("windshield"))
+                    r.sharedMaterial = glassMat;
+                else if (rName.Contains("light"))
+                    r.sharedMaterial = headlightMat;
+                else
+                    r.sharedMaterial = bodyMat;
+            }
+
+            float wheelW = isSUV ? 0.38f : 0.32f;
+            float wheelH = isSUV ? 0.18f : 0.14f;
+            float fZ = carL * 0.32f;
+            float rZ = -carL * 0.32f;
+            float wheelY = rideH * 0.5f + wheelH;
+            Vector3[] wheelPos =
+            {
+                new Vector3(-carW * 0.5f - 0.02f, wheelY, fZ),
+                new Vector3(carW * 0.5f + 0.02f, wheelY, fZ),
+                new Vector3(-carW * 0.5f - 0.02f, wheelY, rZ),
+                new Vector3(carW * 0.5f + 0.02f, wheelY, rZ)
+            };
+            foreach (Vector3 wp in wheelPos)
+            {
+                GameObject wheel = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                wheel.name = "Wheel";
+                wheel.transform.SetParent(car.transform);
+                wheel.transform.localPosition = wp;
+                wheel.transform.localScale = new Vector3(wheelW, wheelH, wheelW);
+                wheel.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+                SetRendererMaterial(wheel, tireMat);
+                Object.DestroyImmediate(wheel.GetComponent<Collider>());
+
+                GameObject rim = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                rim.name = "Rim";
+                rim.transform.SetParent(wheel.transform);
+                rim.transform.localPosition = Vector3.zero;
+                rim.transform.localScale = new Vector3(0.55f, 0.52f, 0.55f);
+                rim.transform.localRotation = Quaternion.identity;
+                SetRendererMaterial(rim, rimMat);
+                Object.DestroyImmediate(rim.GetComponent<Collider>());
+            }
+
+            float hoodFront = carL * 0.5f;
+            float trunkBack = -carL * 0.5f;
+            Vector3[] hlPos = { new Vector3(-carW * 0.35f, rideH + 0.18f, hoodFront + 0.13f), new Vector3(carW * 0.35f, rideH + 0.18f, hoodFront + 0.13f) };
+            foreach (Vector3 hp in hlPos)
+            {
+                GameObject hl = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                hl.name = "Headlight";
+                hl.transform.SetParent(car.transform);
+                hl.transform.localPosition = hp;
+                hl.transform.localScale = new Vector3(0.35f, 0.18f, 0.06f);
+                SetRendererMaterial(hl, headlightMat);
+                Object.DestroyImmediate(hl.GetComponent<Collider>());
+            }
+
+            Vector3[] tlPos = { new Vector3(-carW * 0.35f, rideH + 0.18f, trunkBack - 0.13f), new Vector3(carW * 0.35f, rideH + 0.18f, trunkBack - 0.13f) };
+            foreach (Vector3 tp in tlPos)
+            {
+                GameObject tl = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                tl.name = "Taillight";
+                tl.transform.SetParent(car.transform);
+                tl.transform.localPosition = tp;
+                tl.transform.localScale = new Vector3(0.28f, 0.14f, 0.06f);
+                SetRendererMaterial(tl, taillightMat);
+                Object.DestroyImmediate(tl.GetComponent<Collider>());
+            }
+
+            float plateW = 0.6f, plateH = 0.15f;
+            GameObject frontPlate = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            frontPlate.name = "FrontPlate";
+            frontPlate.transform.SetParent(car.transform);
+            frontPlate.transform.localPosition = new Vector3(0f, rideH + 0.15f, hoodFront + 0.14f);
+            frontPlate.transform.localScale = new Vector3(plateW, plateH, 0.02f);
+            SetRendererMaterial(frontPlate, CreateMaterial("M_Plate_" + brand, Color.white));
+            Object.DestroyImmediate(frontPlate.GetComponent<Collider>());
+
+            GameObject rearPlate = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            rearPlate.name = "RearPlate";
+            rearPlate.transform.SetParent(car.transform);
+            rearPlate.transform.localPosition = new Vector3(0f, rideH + 0.15f, trunkBack - 0.14f);
+            rearPlate.transform.localScale = new Vector3(plateW, plateH, 0.02f);
+            SetRendererMaterial(rearPlate, CreateMaterial("M_RearPlate_" + brand, Color.white));
+            Object.DestroyImmediate(rearPlate.GetComponent<Collider>());
+
+            BoxCollider col = car.AddComponent<BoxCollider>();
+            col.size = new Vector3(carW + 0.2f, 1.2f, carL + 0.3f);
+            col.center = new Vector3(0f, rideH + 0.45f, 0f);
+
+            GameObject labelGO = new GameObject("BrandLabel");
+            labelGO.transform.SetParent(car.transform);
+            labelGO.transform.localPosition = new Vector3(0f, rideH + 1.2f, 0f);
+            labelGO.transform.localRotation = Quaternion.identity;
+
+            Canvas labelCanvas = labelGO.AddComponent<Canvas>();
+            labelCanvas.renderMode = RenderMode.WorldSpace;
+            RectTransform canvasRT = labelGO.GetComponent<RectTransform>();
+            canvasRT.sizeDelta = new Vector2(4f, 0.6f);
+            canvasRT.localScale = Vector3.one * 0.05f;
+
+            GameObject textGO = new GameObject("Text");
+            textGO.transform.SetParent(labelGO.transform, false);
+            RectTransform textRT = textGO.AddComponent<RectTransform>();
+            textRT.anchorMin = Vector2.zero;
+            textRT.anchorMax = Vector2.one;
+            textRT.sizeDelta = Vector2.zero;
+
+            Text label = textGO.AddComponent<Text>();
+            label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            label.fontSize = 28;
+            label.alignment = TextAnchor.MiddleCenter;
+            label.color = Color.white;
+            label.horizontalOverflow = HorizontalWrapMode.Overflow;
+            label.text = brand;
 
             CarController cc = car.AddComponent<CarController>();
             cc.brandName = brand;
