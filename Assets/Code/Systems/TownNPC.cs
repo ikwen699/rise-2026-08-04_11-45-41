@@ -28,6 +28,22 @@ namespace Rise.Systems
         private bool _playerInRange;
         private int _lineIndex;
 
+        private Renderer _torsoRenderer;
+        private Material _torsoMat;
+        private Renderer _leftArmRenderer;
+        private Material _leftArmMat;
+        private Renderer _rightArmRenderer;
+        private Material _rightArmMat;
+        private Renderer _leftLegRenderer;
+        private Material _leftLegMat;
+        private Renderer _rightLegRenderer;
+        private Material _rightLegMat;
+
+        private float _outfitTimer;
+        private float _outfitInterval = 300f;
+        private Color[] _shirtPalette;
+        private Color[] _pantsPalette;
+
         public bool IsOpen => _isOpen;
         public bool IsPlayerInRange => _playerInRange;
 
@@ -57,18 +73,88 @@ namespace Rise.Systems
 
         private void Start()
         {
-            Renderer bodyR = transform.Find("Body")?.GetComponent<Renderer>();
-            if (bodyR != null && bodyMaterial != null)
-            {
-                bodyR.material = new Material(bodyMaterial);
-                bodyR.material.color = bodyTint;
-            }
+            InitRenderers();
+            InitOutfitPalette();
+            ApplyOutfitColor(bodyTint, GetPantsForShirt(bodyTint));
+            _outfitTimer = Random.Range(60f, _outfitInterval);
 
             if (waypoints.Length > 0)
             {
                 _target = waypoints[0];
                 _index = 1;
             }
+        }
+
+        private void InitRenderers()
+        {
+            Transform torso = FindPart("Body_Torso");
+            Transform armL = FindPart("Arm_L");
+            Transform armR = FindPart("Arm_R");
+            Transform legL = FindPart("Leg_L");
+            Transform legR = FindPart("Leg_R");
+
+            if (torso != null) { _torsoRenderer = torso.GetComponent<Renderer>(); _torsoMat = InstanceMat(_torsoRenderer); }
+            if (armL != null) { _leftArmRenderer = armL.GetComponent<Renderer>(); _leftArmMat = InstanceMat(_leftArmRenderer); }
+            if (armR != null) { _rightArmRenderer = armR.GetComponent<Renderer>(); _rightArmMat = InstanceMat(_rightArmRenderer); }
+            if (legL != null) { _leftLegRenderer = legL.GetComponent<Renderer>(); _leftLegMat = InstanceMat(_leftLegRenderer); }
+            if (legR != null) { _rightLegRenderer = legR.GetComponent<Renderer>(); _rightLegMat = InstanceMat(_rightLegRenderer); }
+        }
+
+        private void InitOutfitPalette()
+        {
+            _shirtPalette = new[]
+            {
+                new Color(0.85f, 0.40f, 0.45f), new Color(0.35f, 0.55f, 0.85f), new Color(0.40f, 0.70f, 0.45f),
+                new Color(0.85f, 0.75f, 0.30f), new Color(0.60f, 0.45f, 0.75f), new Color(0.20f, 0.60f, 0.65f),
+                new Color(0.90f, 0.55f, 0.20f), new Color(0.15f, 0.15f, 0.18f), new Color(0.55f, 0.20f, 0.70f),
+                new Color(0.85f, 0.82f, 0.78f), new Color(0.85f, 0.72f, 0.30f), new Color(0.12f, 0.40f, 0.65f),
+                new Color(0.70f, 0.25f, 0.25f), new Color(0.30f, 0.60f, 0.35f), new Color(0.75f, 0.50f, 0.30f)
+            };
+            _pantsPalette = new[]
+            {
+                new Color(0.20f, 0.20f, 0.25f), new Color(0.30f, 0.30f, 0.35f), new Color(0.25f, 0.25f, 0.20f),
+                new Color(0.15f, 0.15f, 0.18f), new Color(0.35f, 0.25f, 0.18f), new Color(0.20f, 0.30f, 0.50f),
+                new Color(0.10f, 0.10f, 0.12f)
+            };
+        }
+
+        private void ApplyOutfitColor(Color shirt, Color pants)
+        {
+            if (_torsoMat != null) _torsoMat.color = shirt;
+            if (_leftArmMat != null) _leftArmMat.color = shirt;
+            if (_rightArmMat != null) _rightArmMat.color = shirt;
+            if (_leftLegMat != null) _leftLegMat.color = pants;
+            if (_rightLegMat != null) _rightLegMat.color = pants;
+        }
+
+        private Color GetPantsForShirt(Color shirt)
+        {
+            return _pantsPalette != null ? _pantsPalette[Random.Range(0, _pantsPalette.Length)] : new Color(0.2f, 0.2f, 0.25f);
+        }
+
+        private void ChangeOutfit()
+        {
+            if (_shirtPalette == null || _shirtPalette.Length == 0) return;
+            Color newShirt = _shirtPalette[Random.Range(0, _shirtPalette.Length)];
+            Color newPants = GetPantsForShirt(newShirt);
+            ApplyOutfitColor(newShirt, newPants);
+        }
+
+        private Transform FindPart(string name)
+        {
+            foreach (Transform t in GetComponentsInChildren<Transform>(true))
+            {
+                if (t.name == name) return t;
+            }
+            return null;
+        }
+
+        private Material InstanceMat(Renderer r)
+        {
+            if (r == null) return null;
+            Material m = new Material(r.sharedMaterial);
+            r.material = m;
+            return m;
         }
 
         private void Update()
@@ -125,6 +211,13 @@ namespace Rise.Systems
             {
                 transform.rotation = Quaternion.LookRotation(to.normalized);
             }
+
+            _outfitTimer -= Time.deltaTime;
+            if (_outfitTimer <= 0f)
+            {
+                ChangeOutfit();
+                _outfitTimer = Random.Range(60f, _outfitInterval);
+            }
         }
 
         private void Open()
@@ -133,6 +226,7 @@ namespace Rise.Systems
             _lineIndex = 0;
             _gameManager.ActiveTownNPC = this;
             _gameManager.ActiveShop = null;
+            _gameManager.Rep?.AddReputation(2);
         }
 
         private void Close()

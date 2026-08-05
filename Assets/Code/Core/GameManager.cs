@@ -32,6 +32,7 @@ namespace Rise.Core
         public TimeSystem Clock { get; private set; }
         public JobSystem Jobs { get; private set; }
         public PlayerNeeds Needs { get; private set; }
+        public ReputationSystem Rep { get; private set; }
 
         public void EnsureNeeds()
         {
@@ -42,18 +43,22 @@ namespace Rise.Core
             if (Needs != null) Needs.Configure(this);
         }
         public ShopStand ActiveShop { get; set; }
+        public ClothingStand ActiveClothingShop { get; set; }
         public Partner Partner { get; private set; }
         public TownNPC ActiveTownNPC { get; set; }
 
         private readonly List<ShopStand> _shops = new List<ShopStand>();
         private readonly List<WorkStation> _stations = new List<WorkStation>();
         private readonly List<TownNPC> _townNPCs = new List<TownNPC>();
+        private readonly List<ClothingStand> _clothingShops = new List<ClothingStand>();
         private float _jobEarnAccumulator;
         private Transform _player;
         private Light _sun;
 
         public int ShopCount => _shops.Count;
         public ShopStand GetShop(int index) => _shops[index];
+        public int ClothingShopCount => _clothingShops.Count;
+        public ClothingStand GetClothingShop(int index) => _clothingShops[index];
         public int StationCount => _stations.Count;
         public WorkStation GetStation(int index) => _stations[index];
         public int TownNPCCount => _townNPCs.Count;
@@ -71,6 +76,8 @@ namespace Rise.Core
             Wallet = gameObject.AddComponent<Wallet>();
             Clock = gameObject.AddComponent<TimeSystem>();
             Jobs = gameObject.AddComponent<JobSystem>();
+            Rep = gameObject.AddComponent<ReputationSystem>();
+            Rep.Configure(this);
 
             Wallet.OnMoneyChanged += value => OnMoneyChanged?.Invoke(value);
             Clock.OnDayChanged += day => OnDayChanged?.Invoke(day);
@@ -93,6 +100,7 @@ namespace Rise.Core
             FindSun();
             SetupWorkStations();
             SetupShops();
+            SetupClothingShops();
             SetupPartner();
             SetupTownspeople();
 
@@ -108,6 +116,19 @@ namespace Rise.Core
             if (Jobs != null && loaded != null)
             {
                 Jobs.ApplyTotalEarned(loaded.totalEarned);
+            }
+            if (Rep != null && loaded != null)
+            {
+                Rep.ApplySaved(loaded.reputation);
+            }
+            if (_player != null)
+            {
+                PlayerAppearance appearance = _player.GetComponent<PlayerAppearance>();
+                if (appearance != null)
+                {
+                    if (loaded != null) appearance.ApplySaved(loaded.outfitIndex);
+                    else appearance.Init();
+                }
             }
         }
 
@@ -171,6 +192,17 @@ namespace Rise.Core
             }
         }
 
+        private void SetupClothingShops()
+        {
+            ClothingStand[] stands = FindObjectsByType<ClothingStand>(FindObjectsInactive.Include);
+            _clothingShops.Clear();
+            foreach (ClothingStand stand in stands)
+            {
+                stand.Configure(_player, this);
+                _clothingShops.Add(stand);
+            }
+        }
+
         private void SetupPartner()
         {
             Partner partner = FindAnyObjectByType<Partner>();
@@ -204,6 +236,7 @@ namespace Rise.Core
                 _jobEarnAccumulator -= earned;
                 Wallet.Add(earned);
                 Jobs.AddEarned(earned);
+                Rep?.AddReputation(1);
             }
         }
 
@@ -253,6 +286,12 @@ namespace Rise.Core
 
         public void SaveNow()
         {
+            int outfitIdx = 0;
+            if (_player != null)
+            {
+                PlayerAppearance app = _player.GetComponent<PlayerAppearance>();
+                if (app != null) outfitIdx = app.CurrentOutfitIndex;
+            }
             GameSave.Save(new SaveData
             {
                 money = Wallet.Money,
@@ -268,7 +307,9 @@ namespace Rise.Core
                 married = Partner != null && Partner.Married,
                 marriageDay = Partner != null ? Partner.MarriageDay : 0,
                 childSpawned = Partner != null && Partner.ChildSpawned,
-                totalEarned = Jobs.TotalEarned
+                totalEarned = Jobs.TotalEarned,
+                outfitIndex = outfitIdx,
+                reputation = Rep != null ? Rep.Reputation : 0
             });
         }
 

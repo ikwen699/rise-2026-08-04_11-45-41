@@ -202,13 +202,15 @@ namespace Rise.EditorTools
             controller.radius = 0.4f;
             controller.center = new Vector3(0f, 1f, 0f);
 
-            GameObject body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            body.name = "Body";
-            body.transform.SetParent(playerGO.transform);
-            body.transform.localPosition = new Vector3(0f, 1f, 0f);
-            body.transform.localScale = new Vector3(0.8f, 1f, 0.8f);
-            Object.DestroyImmediate(body.GetComponent<Collider>());
-            SetRendererMaterial(body, CreateMaterial("M_PlayerBody", new Color(0.25f, 0.45f, 0.85f)));
+            Transform humanoid = BuildHumanoid(playerGO.transform, "Humanoid", Vector3.zero,
+                new Color(0.88f, 0.76f, 0.64f),
+                new Color(0.25f, 0.45f, 0.85f),
+                new Color(0.20f, 0.20f, 0.25f),
+                new Color(0.25f, 0.15f, 0.08f),
+                1f);
+            humanoid.localPosition = Vector3.zero;
+
+            playerGO.AddComponent<PlayerAppearance>();
 
             GameObject pivot = new GameObject("CameraPivot");
             pivot.transform.SetParent(rig);
@@ -221,7 +223,10 @@ namespace Rise.EditorTools
 
             CinemachineCamera cmCamera = cmGO.AddComponent<CinemachineCamera>();
             cmCamera.Follow = pivot.transform;
-            cmCamera.LookAt = body.transform;
+
+            Transform headLook = humanoid.Find("Head");
+            if (headLook == null) headLook = playerGO.transform;
+            cmCamera.LookAt = headLook;
 
             CinemachineThirdPersonFollow follow = cmGO.AddComponent<CinemachineThirdPersonFollow>();
             follow.CameraDistance = 5f;
@@ -340,17 +345,41 @@ namespace Rise.EditorTools
             Transform npcs = new GameObject("Townspeople").transform;
             npcs.SetParent(parent);
 
-            Material body = CreateMaterial("M_CitizenBody", new Color(0.6f, 0.6f, 0.6f));
+            Color[] skinTones =
+            {
+                new Color(0.88f, 0.76f, 0.64f), new Color(0.80f, 0.68f, 0.55f),
+                new Color(0.92f, 0.80f, 0.68f), new Color(0.75f, 0.60f, 0.48f),
+                new Color(0.85f, 0.72f, 0.58f), new Color(0.90f, 0.78f, 0.66f),
+                new Color(0.82f, 0.70f, 0.56f)
+            };
 
             Color[] shirts =
             {
-                new Color(0.85f, 0.40f, 0.45f),
-                new Color(0.35f, 0.55f, 0.85f),
-                new Color(0.40f, 0.70f, 0.45f),
-                new Color(0.85f, 0.75f, 0.30f),
-                new Color(0.60f, 0.45f, 0.75f),
-                new Color(0.20f, 0.60f, 0.65f),
+                new Color(0.85f, 0.40f, 0.45f), new Color(0.35f, 0.55f, 0.85f),
+                new Color(0.40f, 0.70f, 0.45f), new Color(0.85f, 0.75f, 0.30f),
+                new Color(0.60f, 0.45f, 0.75f), new Color(0.20f, 0.60f, 0.65f),
                 new Color(0.75f, 0.30f, 0.30f)
+            };
+
+            Color[] pants =
+            {
+                new Color(0.25f, 0.22f, 0.18f), new Color(0.20f, 0.20f, 0.30f),
+                new Color(0.35f, 0.30f, 0.25f), new Color(0.15f, 0.15f, 0.18f),
+                new Color(0.30f, 0.25f, 0.20f), new Color(0.18f, 0.22f, 0.35f),
+                new Color(0.22f, 0.18f, 0.15f)
+            };
+
+            Color[] hairs =
+            {
+                new Color(0.40f, 0.30f, 0.18f), new Color(0.60f, 0.40f, 0.20f),
+                new Color(0.15f, 0.10f, 0.06f), new Color(0.70f, 0.50f, 0.25f),
+                new Color(0.30f, 0.20f, 0.10f), new Color(0.50f, 0.35f, 0.18f),
+                new Color(0.20f, 0.15f, 0.08f)
+            };
+
+            float[] heights =
+            {
+                0.95f, 1.0f, 1.05f, 0.90f, 1.10f, 0.95f, 1.0f
             };
 
             Vector3[] roadRoute =
@@ -378,59 +407,48 @@ namespace Rise.EditorTools
                 new Vector3(-16f, 0f, 20f), new Vector3(-24f, 0f, 28f)
             };
 
-            BuildCitizen(npcs, "Citizen_1", new Vector3(0f, 0f, -16f), roadRoute, body, skin, shirts[0],
+            BuildCitizen(npcs, "Citizen_1", new Vector3(0f, 0f, -16f), roadRoute,
+                skinTones[0], shirts[0], pants[0], hairs[0], heights[0], 1.2f,
                 "Old Thomas", new[] { "I've lived in this town for forty years.", "The market used to be twice this size.", "Come back when you're older, kid." }, "Marriage keeps you humble.");
 
-            BuildCitizen(npcs, "Citizen_2", new Vector3(0f, 0f, 24f), roadRoute, body, skin, shirts[1],
+            BuildCitizen(npcs, "Citizen_2", new Vector3(0f, 0f, 24f), roadRoute,
+                skinTones[1], shirts[1], pants[1], hairs[1], heights[1], 1.1f,
                 "Bella", new[] { "Welcome to town! Everything's better with a smile.", "Try the shop near the square, good prices.", "I hope you find what you're looking for." }, "Love makes every day brighter.");
 
-            BuildCitizen(npcs, "Citizen_3", new Vector3(-4f, 0f, 26f), shopRoute, body, skin, shirts[2],
+            BuildCitizen(npcs, "Citizen_3", new Vector3(-4f, 0f, 26f), shopRoute,
+                skinTones[2], shirts[2], pants[2], hairs[2], heights[2], 1.15f,
                 "Grocer Mark", new[] { "Fresh bread every morning, don't miss it.", "Business has been slow lately.", "Stop by and say hello sometime." }, "My wife runs the best bakery.");
 
-            BuildCitizen(npcs, "Citizen_4", new Vector3(4f, 0f, 26f), shopRoute, body, skin, shirts[3],
+            BuildCitizen(npcs, "Citizen_4", new Vector3(4f, 0f, 26f), shopRoute,
+                skinTones[3], shirts[3], pants[3], hairs[3], heights[3], 0.95f,
                 "Lucy", new[] { "The flowers here are beautiful, aren't they?", "I work at the flower stand.", "A little kindness goes a long way." }, "My husband helps at the market.");
 
-            BuildCitizen(npcs, "Citizen_5", new Vector3(16f, 0f, 20f), marketEast, body, skin, shirts[4],
+            BuildCitizen(npcs, "Citizen_5", new Vector3(16f, 0f, 20f), marketEast,
+                skinTones[4], shirts[4], pants[4], hairs[4], heights[4], 1.2f,
                 "Farmer Joe", new[] { "I grow the best vegetables in the county.", "The soil here is rich and good.", "Work hard, eat well, sleep tight." }, "My wife brings me lunch every day.");
 
-            BuildCitizen(npcs, "Citizen_6", new Vector3(-16f, 0f, 20f), marketWest, body, skin, shirts[5],
+            BuildCitizen(npcs, "Citizen_6", new Vector3(-16f, 0f, 20f), marketWest,
+                skinTones[5], shirts[5], pants[5], hairs[5], heights[5], 1.0f,
                 "Millie", new[] { "I teach the children at the schoolhouse.", "Education opens every door.", "Keep your chin up, things will improve." }, "My sweetheart brings me flowers.");
 
-            BuildCitizen(npcs, "Citizen_7", new Vector3(0f, 0f, 32f), roadRoute, body, skin, shirts[6],
+            BuildCitizen(npcs, "Citizen_7", new Vector3(0f, 0f, 32f), roadRoute,
+                skinTones[6], shirts[6], pants[6], hairs[6], heights[6], 1.1f,
                 "Sam", new[] { "The town hall is where you get your papers.", "I'm in charge of keeping the roads clean.", "It's a living, not much else to say.", "The mayor's a good man, listen to him.", "Stay out of trouble and you'll be fine." }, "My partner keeps me in line.");
         }
 
         private static void BuildCitizen(Transform parent, string name, Vector3 start, Vector3[] route,
-            Material bodyMat, Material skinMat, Color tint, string npcName, string[] lines, string marriedLine)
+            Color skinColor, Color shirtColor, Color pantsColor, Color hairColor, float height, float walkSpeed,
+            string npcName, string[] lines, string marriedLine)
         {
-            GameObject npc = new GameObject(name);
-            npc.transform.SetParent(parent);
-            npc.transform.position = start;
+            BuildHumanoid(parent, name, start, skinColor, shirtColor, pantsColor, hairColor, height);
 
-            GameObject body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            body.name = "Body";
-            body.transform.SetParent(npc.transform);
-            body.transform.localPosition = new Vector3(0f, 0.9f, 0f);
-            body.transform.localScale = new Vector3(0.55f, 0.9f, 0.55f);
-            Object.DestroyImmediate(body.GetComponent<Collider>());
-
-            GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            head.name = "Head";
-            head.transform.SetParent(npc.transform);
-            head.transform.localPosition = new Vector3(0f, 1.85f, 0f);
-            head.transform.localScale = Vector3.one * 0.42f;
-            Object.DestroyImmediate(head.GetComponent<Collider>());
-            SetRendererMaterial(head, skinMat);
-
-            TownNPC town = npc.AddComponent<TownNPC>();
+            TownNPC town = parent.Find(name).gameObject.AddComponent<TownNPC>();
             town.npcName = npcName;
             town.lines = lines;
             town.marriedLine = marriedLine;
-            town.bodyMaterial = bodyMat;
-            town.bodyTint = tint;
-            town.skinMaterial = skinMat;
+            town.bodyTint = shirtColor;
             town.SetRoute(route);
-            town.walkSpeed = UnityEngine.Random.Range(1f, 1.6f);
+            town.walkSpeed = walkSpeed;
         }
 
         private static void BuildRoadLines(Transform parent, Material mat)
@@ -747,6 +765,79 @@ namespace Rise.EditorTools
             SetRendererMaterial(go, mat);
         }
 
+        private static Transform BuildHumanoid(Transform parent, string name, Vector3 position,
+            Color skinColor, Color shirtColor, Color pantsColor, Color hairColor, float scale = 1f)
+        {
+            Material skin = CreateMaterial("M_Skin_" + name, skinColor);
+            Material shirt = CreateMaterial("M_Shirt_" + name, shirtColor);
+            Material pants = CreateMaterial("M_Pants_" + name, pantsColor);
+            Material hair = CreateMaterial("M_Hair_" + name, hairColor);
+
+            GameObject root = new GameObject(name);
+            root.transform.SetParent(parent);
+            root.transform.position = position;
+
+            float s = scale;
+
+            GameObject torso = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            torso.name = "Body_Torso";
+            torso.transform.SetParent(root.transform);
+            torso.transform.localPosition = new Vector3(0f, 1.05f * s, 0f);
+            torso.transform.localScale = new Vector3(0.50f * s, 0.50f * s, 0.30f * s);
+            Object.DestroyImmediate(torso.GetComponent<Collider>());
+            SetRendererMaterial(torso, shirt);
+
+            GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            head.name = "Head";
+            head.transform.SetParent(root.transform);
+            head.transform.localPosition = new Vector3(0f, 1.70f * s, 0f);
+            head.transform.localScale = Vector3.one * 0.38f * s;
+            Object.DestroyImmediate(head.GetComponent<Collider>());
+            SetRendererMaterial(head, skin);
+
+            GameObject hairGO = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            hairGO.name = "Hair";
+            hairGO.transform.SetParent(root.transform);
+            hairGO.transform.localPosition = new Vector3(0f, 1.82f * s, -0.02f * s);
+            hairGO.transform.localScale = new Vector3(0.42f * s, 0.20f * s, 0.42f * s);
+            Object.DestroyImmediate(hairGO.GetComponent<Collider>());
+            SetRendererMaterial(hairGO, hair);
+
+            GameObject armL = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            armL.name = "Arm_L";
+            armL.transform.SetParent(root.transform);
+            armL.transform.localPosition = new Vector3(-0.38f * s, 1.05f * s, 0f);
+            armL.transform.localScale = new Vector3(0.14f * s, 0.38f * s, 0.14f * s);
+            Object.DestroyImmediate(armL.GetComponent<Collider>());
+            SetRendererMaterial(armL, shirt);
+
+            GameObject armR = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            armR.name = "Arm_R";
+            armR.transform.SetParent(root.transform);
+            armR.transform.localPosition = new Vector3(0.38f * s, 1.05f * s, 0f);
+            armR.transform.localScale = new Vector3(0.14f * s, 0.38f * s, 0.14f * s);
+            Object.DestroyImmediate(armR.GetComponent<Collider>());
+            SetRendererMaterial(armR, shirt);
+
+            GameObject legL = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            legL.name = "Leg_L";
+            legL.transform.SetParent(root.transform);
+            legL.transform.localPosition = new Vector3(-0.14f * s, 0.35f * s, 0f);
+            legL.transform.localScale = new Vector3(0.18f * s, 0.40f * s, 0.18f * s);
+            Object.DestroyImmediate(legL.GetComponent<Collider>());
+            SetRendererMaterial(legL, pants);
+
+            GameObject legR = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            legR.name = "Leg_R";
+            legR.transform.SetParent(root.transform);
+            legR.transform.localPosition = new Vector3(0.14f * s, 0.35f * s, 0f);
+            legR.transform.localScale = new Vector3(0.18f * s, 0.40f * s, 0.18f * s);
+            Object.DestroyImmediate(legR.GetComponent<Collider>());
+            SetRendererMaterial(legR, pants);
+
+            return root.transform;
+        }
+
         [MenuItem("Rise/Setup/Build Gameplay Systems")]
         public static void BuildGameplaySystems()
         {
@@ -771,6 +862,7 @@ namespace Rise.EditorTools
             EnsureWorkStations(general, cashier, manager);
             EnsurePlayerNeeds();
             EnsureShop();
+            EnsureClothingShop();
             EnsurePartner();
             EnsureHUD(gameManager);
 
@@ -865,41 +957,48 @@ namespace Rise.EditorTools
             });
         }
 
+        private static void EnsureClothingShop()
+        {
+            ClothingStand existing = Object.FindAnyObjectByType<ClothingStand>();
+            if (existing != null) return;
+
+            GameObject stand = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            stand.name = "ClothingStand";
+            stand.transform.position = new Vector3(10f, 0.6f, -6f);
+            stand.transform.localScale = new Vector3(3f, 1.5f, 2f);
+            Object.DestroyImmediate(stand.GetComponent<Collider>());
+            SetRendererMaterial(stand, CreateMaterial("M_ClothingStand", new Color(0.85f, 0.82f, 0.78f)));
+
+            ClothingStand clothing = stand.AddComponent<ClothingStand>();
+            clothing.SetItems(new ClothingItemData[]
+            {
+                new ClothingItemData { itemName = "Streetwear", price = 0, outfitIndex = 0, minReputation = 0 },
+                new ClothingItemData { itemName = "Classic Tee", price = 25, outfitIndex = 1, minReputation = 0 },
+                new ClothingItemData { itemName = "Casual Denim", price = 40, outfitIndex = 2, minReputation = 0 },
+                new ClothingItemData { itemName = "Fresh Green", price = 50, outfitIndex = 3, minReputation = 0 },
+                new ClothingItemData { itemName = "Sunset Orange", price = 60, outfitIndex = 4, minReputation = 0 },
+                new ClothingItemData { itemName = "Urban Black", price = 75, outfitIndex = 5, minReputation = 0 },
+                new ClothingItemData { itemName = "Royal Purple", price = 80, outfitIndex = 6, minReputation = 0 },
+                new ClothingItemData { itemName = "Designer Suit", price = 200, outfitIndex = 7, minReputation = 50 },
+                new ClothingItemData { itemName = "Merci Couture", price = 350, outfitIndex = 8, minReputation = 80 },
+                new ClothingItemData { itemName = "Elite Gold", price = 500, outfitIndex = 9, minReputation = 100 }
+            });
+        }
+
         private static void EnsurePartner()
         {
             Partner existing = Object.FindAnyObjectByType<Partner>();
             if (existing != null) return;
 
-            GameObject maya = new GameObject("Maya");
-            maya.transform.position = new Vector3(3.5f, 0f, 26f);
+            Transform mayaRoot = BuildHumanoid(null, "Maya", new Vector3(3.5f, 0f, 26f),
+                new Color(0.93f, 0.82f, 0.72f),
+                new Color(0.85f, 0.40f, 0.45f),
+                new Color(0.30f, 0.20f, 0.18f),
+                new Color(0.20f, 0.12f, 0.08f),
+                0.95f);
 
-            Material skin = CreateMaterial("M_Skin", new Color(0.93f, 0.82f, 0.72f));
-            Material clothes = CreateMaterial("M_Clothes", new Color(0.85f, 0.4f, 0.45f));
-            Material hair = CreateMaterial("M_Hair", new Color(0.2f, 0.12f, 0.08f));
-
-            GameObject body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            body.name = "Body";
-            body.transform.SetParent(maya.transform);
-            body.transform.localPosition = new Vector3(0f, 0.9f, 0f);
-            body.transform.localScale = new Vector3(0.55f, 0.9f, 0.55f);
-            SetRendererMaterial(body, clothes);
-
-            GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            head.name = "Head";
-            head.transform.SetParent(maya.transform);
-            head.transform.localPosition = new Vector3(0f, 1.85f, 0f);
-            head.transform.localScale = Vector3.one * 0.42f;
-            SetRendererMaterial(head, skin);
-
-            GameObject hairGO = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            hairGO.name = "Hair";
-            hairGO.transform.SetParent(maya.transform);
-            hairGO.transform.localPosition = new Vector3(0f, 2.05f, -0.05f);
-            hairGO.transform.localScale = new Vector3(0.46f, 0.22f, 0.46f);
-            SetRendererMaterial(hairGO, hair);
-
-            Partner partner = maya.AddComponent<Partner>();
-            partner.skinMaterial = skin;
+            Partner partner = mayaRoot.gameObject.AddComponent<Partner>();
+            partner.skinMaterial = CreateMaterial("M_Skin_Maya", new Color(0.93f, 0.82f, 0.72f));
         }
 
         private static void EnsurePlayerNeeds()

@@ -111,7 +111,19 @@ namespace Rise.Systems
             ShopItemData item = items[index];
             if (_gameManager.Wallet.CanAfford(item.price))
             {
-                _gameManager.Wallet.Spend(item.price);
+                int adjustedPrice = item.price;
+                if (_gameManager.Rep != null)
+                {
+                    float discount = _gameManager.Rep.GetShopDiscount();
+                    adjustedPrice = Mathf.RoundToInt(item.price * (1f + discount));
+                    if (adjustedPrice < 0) adjustedPrice = 0;
+                }
+                if (!_gameManager.Wallet.CanAfford(adjustedPrice))
+                {
+                    SetMessage("Not enough money for " + item.itemName + " ($" + adjustedPrice + ")");
+                    return;
+                }
+                _gameManager.Wallet.Spend(adjustedPrice);
                 switch (item.itemType)
                 {
                     case ShopItemType.Food:
@@ -139,9 +151,10 @@ namespace Rise.Systems
                         SetMessage("Bought " + item.itemName + " (a gift)");
                         break;
                     default:
-                        SetMessage("Bought " + item.itemName + " for $" + item.price);
+                        SetMessage("Bought " + item.itemName + " for $" + adjustedPrice);
                         break;
                 }
+                _gameManager.Rep?.AddReputation(1);
             }
             else
             {

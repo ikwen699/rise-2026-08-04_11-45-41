@@ -130,6 +130,7 @@ namespace Rise.Systems
                 return;
             }
             AddAffection(value, "Gave " + partnerName + " " + giftName + "! (+" + value + ")");
+            _gameManager.Rep?.AddReputation(3);
         }
 
         private void AddAffection(float amount, string message)
@@ -140,6 +141,7 @@ namespace Rise.Systems
             {
                 Married = true;
                 MarriageDay = _gameManager.Clock.Day;
+                _gameManager.Rep?.AddReputation(10);
                 _message = "You proposed and " + partnerName + " said YES! You are married!";
             }
         }

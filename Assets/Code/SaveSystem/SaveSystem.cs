@@ -21,6 +21,8 @@ namespace Rise.SaveSystem
         public int marriageDay;
         public bool childSpawned;
         public int totalEarned;
+        public int outfitIndex;
+        public int reputation;
     }
 
     public static class GameSave

@@ -57,16 +57,24 @@ namespace Rise.UI
             {
                 string line = needs.NeedsText;
                 if (gameManager.Partner != null) line += "   " + gameManager.Partner.StatusText;
+                if (gameManager.Rep != null) line += "   Rep " + gameManager.Rep.Reputation + " " + gameManager.Rep.GetRepTierText();
                 line += "   Earned $" + gameManager.Jobs.TotalEarned;
                 SetText(needsText, line);
             }
 
             ShopStand shop = gameManager.ActiveShop;
+            ClothingStand clothing = gameManager.ActiveClothingShop;
             Partner partner = gameManager.Partner;
             TownNPC townNPC = gameManager.ActiveTownNPC;
             if (shop != null && shop.IsOpen)
             {
                 SetText(shopText, shop.GetMenuText());
+                if (workText != null) workText.text = "";
+                return;
+            }
+            if (clothing != null && clothing.IsOpen)
+            {
+                SetText(shopText, clothing.GetMenuText());
                 if (workText != null) workText.text = "";
                 return;
             }
@@ -114,6 +122,10 @@ namespace Rise.UI
             {
                 hint = "Press E to shop";
             }
+            else if (IsNearClothingShop())
+            {
+                hint = "Press E to browse designer clothes";
+            }
             else
             {
                 hint = "Press E at a yellow work spot to work";
@@ -126,6 +138,15 @@ namespace Rise.UI
             for (int i = 0; i < gameManager.ShopCount; i++)
             {
                 if (gameManager.GetShop(i).IsPlayerInRange) return true;
+            }
+            return false;
+        }
+
+        private bool IsNearClothingShop()
+        {
+            for (int i = 0; i < gameManager.ClothingShopCount; i++)
+            {
+                if (gameManager.GetClothingShop(i).IsPlayerInRange) return true;
             }
             return false;
         }
