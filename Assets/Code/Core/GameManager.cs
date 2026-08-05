@@ -479,7 +479,7 @@ namespace Rise.Core
             if (_townEventTimer <= 0f)
             {
                 _townEventTimer = 360f;
-                int roll = Random.Range(0, 4);
+                int roll = UnityEngine.Random.Range(0, 4);
                 if (roll == 0) Phone.Push("Town Event", "Market day! Visit the shops.");
                 else if (roll == 1) Phone.Push("Town Event", "Festival tonight! NPC goodwill is high.");
                 else if (roll == 2) Phone.Push("Town Event", "A new stranger arrived in town...");
