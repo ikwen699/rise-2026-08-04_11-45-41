@@ -455,7 +455,13 @@ namespace Rise.EditorTools
             }
             sun.shadows = LightShadows.Soft;
 
-            if (Object.FindAnyObjectByType<Light>(l => l.gameObject.name == "Moon Light") == null)
+            Light[] allLights = Object.FindObjectsByType<Light>();
+            bool moonExists = false;
+            foreach (Light l in allLights)
+            {
+                if (l.gameObject.name == "Moon Light") { moonExists = true; break; }
+            }
+            if (!moonExists)
             {
                 GameObject moonGO = new GameObject("Moon Light");
                 moonGO.transform.rotation = Quaternion.Euler(200f, 30f, 0f);
@@ -1837,7 +1843,6 @@ namespace Rise.EditorTools
                 BuildFBXCar(parent, brand, color, minRep, position, fbxModel, isSUV, isCoupe, bodyMat, glassMat, wheelMat, headlightMat, taillightMat, tireMat, rimMat);
                 return;
             }
-            bool isCoupe = brand == "Tesla" || brand == "Lexus";
 
             float carW = isSUV ? 2f : 1.85f;
             float carH = isSUV ? 0.9f : 0.65f;
