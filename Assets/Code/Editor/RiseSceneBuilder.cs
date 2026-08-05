@@ -16,6 +16,14 @@ namespace Rise.EditorTools
 {
     public static class RiseSceneBuilder
     {
+        private struct BuildingInfo
+        {
+            public string name;
+            public Vector3 pos;
+            public float frontZ;
+            public DoorInteractable.InteriorType interiorType;
+        }
+
         private const string OpenWorldSceneName = "OpenWorld";
         private const string OpenWorldScenePath = "Assets/Scenes/OpenWorld/OpenWorld.unity";
         private const string InputAssetPath = "Assets/InputSystem_Actions.inputactions";
@@ -1736,14 +1744,6 @@ namespace Rise.EditorTools
             if (doorRoot != null) Object.DestroyImmediate(doorRoot.gameObject);
             doorRoot = new GameObject("DoorTriggers").transform;
             doorRoot.SetParent(world);
-
-            struct BuildingInfo
-            {
-                public string name;
-                public Vector3 pos;
-                public float frontZ;
-                public DoorInteractable.InteriorType interiorType;
-            }
 
             BuildingInfo[] buildings = new BuildingInfo[]
             {
