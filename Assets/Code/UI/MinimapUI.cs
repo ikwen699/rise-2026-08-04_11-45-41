@@ -15,7 +15,13 @@ namespace Rise.UI
 
         public void Configure(Transform playerTransform)
         {
-            player = playerTransform;
+            if (playerTransform != null)
+                player = playerTransform;
+            else
+            {
+                GameObject p = GameObject.Find("Player");
+                if (p != null) player = p.transform;
+            }
             CreateMinimapCamera();
             CreateMinimapUI();
             CreateCompassUI();

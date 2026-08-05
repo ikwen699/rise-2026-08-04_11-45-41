@@ -19,11 +19,14 @@ namespace Rise.UI
 
         private CanvasGroup _canvasGroup;
         private bool _hudVisible = true;
+        private Text[] _hudTexts;
+        private DoorInteractable[] _cachedDoors;
 
         private void Start()
         {
             if (gameManager == null) gameManager = GameManager.Instance;
             if (gameManager == null) return;
+            _cachedDoors = Object.FindObjectsByType<DoorInteractable>();
 
             gameManager.OnMoneyChanged += HandleMoney;
             gameManager.OnDayChanged += HandleDay;
@@ -52,6 +55,7 @@ namespace Rise.UI
             needsText = needs;
             shopText = shop;
             phoneText = phone;
+            _hudTexts = new[] { moneyText, timeText, dayText, workText, needsText, shopText, phoneText };
         }
 
         private void Update()
@@ -61,11 +65,12 @@ namespace Rise.UI
             if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame)
             {
                 _hudVisible = !_hudVisible;
-                if (_canvasGroup == null) _canvasGroup = GetComponent<CanvasGroup>();
-                if (_canvasGroup != null)
+                if (_hudTexts != null)
                 {
-                    _canvasGroup.alpha = _hudVisible ? 1f : 0f;
-                    _canvasGroup.blocksRaycasts = _hudVisible;
+                    foreach (Text t in _hudTexts)
+                    {
+                        if (t != null) t.enabled = _hudVisible;
+                    }
                 }
             }
 
@@ -282,9 +287,10 @@ namespace Rise.UI
         private bool TryNearDoor(out DoorInteractable nearDoor)
         {
             nearDoor = null;
-            DoorInteractable[] doors = Object.FindObjectsByType<DoorInteractable>();
-            foreach (DoorInteractable door in doors)
+            if (_cachedDoors == null) return false;
+            foreach (DoorInteractable door in _cachedDoors)
             {
+                if (door == null) continue;
                 if (door.isInteriorExit || door.IsInside) continue;
                 if (door.IsPlayerInRange)
                 {

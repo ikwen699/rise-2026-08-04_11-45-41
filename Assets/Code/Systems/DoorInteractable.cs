@@ -179,28 +179,28 @@ namespace Rise.Systems
             {
                 case "Bakery":
                     BuildBakeryInterior(interior.transform, suffix, 8f, 8f, 3.5f, floorMat, wallMat, ceilMat, furnMat, metalMat);
-                    return;
+                    break;
                 case "Restaurant":
                     BuildRestaurantInterior(interior.transform, suffix, 8f, 8f, 3.5f, floorMat, wallMat, ceilMat, furnMat, fabricMat, metalMat);
-                    return;
+                    break;
                 case "Bank":
                     BuildBankInterior(interior.transform, suffix, 8f, 8f, 3.5f, floorMat, wallMat, ceilMat, furnMat, metalMat, glassMat);
-                    return;
+                    break;
                 case "School":
                     BuildSchoolInterior(interior.transform, suffix, 10f, 12f, 4f, floorMat, wallMat, ceilMat, furnMat, metalMat);
-                    return;
+                    break;
                 case "PostOffice":
                     BuildPostOfficeInterior(interior.transform, suffix, 8f, 8f, 3.5f, floorMat, wallMat, ceilMat, furnMat, metalMat);
-                    return;
+                    break;
                 case "TownHall":
                     BuildTownHallInterior(interior.transform, suffix, 10f, 10f, 4f, floorMat, wallMat, ceilMat, furnMat, metalMat, fabricMat);
-                    return;
+                    break;
                 case "Shop_01":
                     BuildGroceryInterior(interior.transform, suffix, 8f, 8f, 3.5f, floorMat, wallMat, ceilMat, furnMat, metalMat, glassMat);
-                    return;
+                    break;
                 case "Shop_02":
                     BuildFlowerShopInterior(interior.transform, suffix, 8f, 8f, 3.5f, floorMat, wallMat, ceilMat, furnMat, fabricMat, metalMat);
-                    return;
+                    break;
             }
 
             switch (interiorType)
@@ -436,9 +436,9 @@ namespace Rise.Systems
             MakeBox(parent, "CounterTop", new Vector3(0f, 1.05f, -d * 0.3f), new Vector3(w * 0.9f + 0.1f, 0.06f, 0.9f), metal);
             MakeBox(parent, "GlassPartition", new Vector3(0f, 1.6f, -d * 0.3f), new Vector3(w * 0.6f, 1f, 0.05f), glass);
             MakeBox(parent, "Desk1", new Vector3(-w * 0.3f, 0.4f, d * 0.15f), new Vector3(1.4f, 0.08f, 0.8f), furn);
-            MakeBox(parent, "Chair1", new Vector3(-w * 0.3f, 0.25f, d * 0.3f), new Vector3(0.45f, 0.5f, 0.45f), fabric);
+            MakeBox(parent, "Chair1", new Vector3(-w * 0.3f, 0.25f, d * 0.3f), new Vector3(0.45f, 0.5f, 0.45f), furn);
             MakeBox(parent, "Desk2", new Vector3(w * 0.3f, 0.4f, d * 0.15f), new Vector3(1.4f, 0.08f, 0.8f), furn);
-            MakeBox(parent, "Chair2", new Vector3(w * 0.3f, 0.25f, d * 0.3f), new Vector3(0.45f, 0.5f, 0.45f), fabric);
+            MakeBox(parent, "Chair2", new Vector3(w * 0.3f, 0.25f, d * 0.3f), new Vector3(0.45f, 0.5f, 0.45f), furn);
             MakeBox(parent, "Vault", new Vector3(0f, 1f, -d * 0.45f), new Vector3(2f, 2f, 0.5f), metal);
         }
 

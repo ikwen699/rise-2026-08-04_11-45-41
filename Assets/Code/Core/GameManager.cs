@@ -308,7 +308,8 @@ namespace Rise.Core
         private void SetupDoors()
         {
             DoorInteractable[] doors = FindObjectsByType<DoorInteractable>(FindObjectsInactive.Include);
-            CanvasGroup fade = FindAnyObjectByType<Canvas>()?.GetComponentInChildren<CanvasGroup>();
+            GameObject hudGO = GameObject.Find("GameHUD CanvaWindow");
+            CanvasGroup fade = hudGO != null ? hudGO.GetComponent<CanvasGroup>() : null;
             foreach (DoorInteractable door in doors)
             {
                 door.Configure(_player, this, fade);
