@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Cinemachine;
 using Rise.SaveSystem;
 using Rise.Systems;
 
@@ -51,9 +52,13 @@ namespace Rise.Core
         private readonly List<WorkStation> _stations = new List<WorkStation>();
         private readonly List<TownNPC> _townNPCs = new List<TownNPC>();
         private readonly List<ClothingStand> _clothingShops = new List<ClothingStand>();
+        private readonly List<CarController> _cars = new List<CarController>();
         private float _jobEarnAccumulator;
         private Transform _player;
         private Light _sun;
+        private CinemachineCamera _cmCamera;
+        private Transform _cmFollow;
+        private Transform _cmLookAt;
 
         public int ShopCount => _shops.Count;
         public ShopStand GetShop(int index) => _shops[index];
@@ -63,6 +68,9 @@ namespace Rise.Core
         public WorkStation GetStation(int index) => _stations[index];
         public int TownNPCCount => _townNPCs.Count;
         public TownNPC GetTownNPC(int index) => _townNPCs[index];
+        public int CarCount => _cars.Count;
+        public CarController GetCar(int index) => _cars[index];
+        public CarController ActiveCar { get; private set; }
 
         private void Awake()
         {
@@ -103,6 +111,10 @@ namespace Rise.Core
             SetupClothingShops();
             SetupPartner();
             SetupTownspeople();
+            SetupCars();
+
+            CinemachineCamera[] cms = FindObjectsByType<CinemachineCamera>();
+            if (cms.Length > 0) _cmCamera = cms[0];
 
             if (Needs != null && loaded != null)
             {
@@ -221,6 +233,56 @@ namespace Rise.Core
             {
                 citizen.Configure(_player, this);
                 _townNPCs.Add(citizen);
+            }
+        }
+
+        private void SetupCars()
+        {
+            CarController[] cars = FindObjectsByType<CarController>(FindObjectsInactive.Include);
+            _cars.Clear();
+            foreach (CarController car in cars)
+            {
+                car.Configure(_player, this);
+                _cars.Add(car);
+            }
+        }
+
+        public void EnterCar(CarController car)
+        {
+            ActiveCar = car;
+            if (_player != null)
+            {
+                PlayerController pc = _player.GetComponent<PlayerController>();
+                if (pc != null) pc.enabled = false;
+                foreach (Renderer r in _player.GetComponentsInChildren<Renderer>())
+                    r.enabled = false;
+            }
+            if (_cmCamera != null)
+            {
+                _cmFollow = _cmCamera.Follow;
+                _cmLookAt = _cmCamera.LookAt;
+                _cmCamera.Follow = car.transform;
+                _cmCamera.LookAt = car.transform;
+            }
+        }
+
+        public void ExitCar()
+        {
+            CarController prev = ActiveCar;
+            ActiveCar = null;
+            if (_player != null)
+            {
+                PlayerController pc = _player.GetComponent<PlayerController>();
+                if (pc != null) pc.enabled = true;
+                foreach (Renderer r in _player.GetComponentsInChildren<Renderer>())
+                    r.enabled = true;
+                if (prev != null)
+                    _player.position = prev.transform.position + prev.transform.right * 2.5f;
+            }
+            if (_cmCamera != null)
+            {
+                _cmCamera.Follow = _cmFollow;
+                _cmCamera.LookAt = _cmLookAt;
             }
         }
 

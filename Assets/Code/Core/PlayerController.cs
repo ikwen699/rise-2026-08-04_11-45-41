@@ -42,6 +42,7 @@ namespace Rise.Core
         private float _pitch;
         private float _targetRotation;
         private float _rotationVelocity;
+        private Systems.WalkAnimation _walkAnim;
 
         public bool IsGrounded => isGrounded;
 
@@ -61,6 +62,7 @@ namespace Rise.Core
         private void Awake()
         {
             _controller = GetComponent<CharacterController>();
+            _walkAnim = GetComponentInChildren<Systems.WalkAnimation>();
         }
 
         private void OnEnable()
@@ -175,6 +177,9 @@ namespace Rise.Core
             }
 
             _controller.Move(motion * Time.deltaTime);
+
+            float hSpeed = new Vector3(_controller.velocity.x, 0f, _controller.velocity.z).magnitude;
+            if (_walkAnim != null) _walkAnim.SetSpeed(hSpeed);
         }
 
         private void OnMovePerformed(InputAction.CallbackContext context) => _moveInput = context.ReadValue<Vector2>();

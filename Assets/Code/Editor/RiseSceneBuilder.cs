@@ -55,6 +55,28 @@ namespace Rise.EditorTools
             Debug.Log("Rise: OpenWorld scene built. Press Play to run.");
         }
 
+        [MenuItem("Rise/Setup/Rebuild Player")]
+        public static void RebuildPlayer()
+        {
+            Scene current = EditorSceneManager.GetActiveScene();
+            if (current.name != OpenWorldSceneName)
+            {
+                if (!EditorUtility.DisplayDialog("Rebuild Player", "This expects the 'OpenWorld' scene to be active.\n\nContinue?", "Yes, open it", "Cancel"))
+                    return;
+                EditorSceneManager.OpenScene(OpenWorldScenePath);
+            }
+
+            materialsFolder = MaterialsFolder;
+            Directory.CreateDirectory(materialsFolder);
+
+            BuildPlayerRig();
+
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene(), OpenWorldScenePath);
+
+            Debug.Log("Rise: Player rig rebuilt as humanoid. Run Build Gameplay Systems to wire up.");
+        }
+
         [MenuItem("Rise/Setup/Build Environment Details")]
         public static void BuildEnvironmentDetails()
         {
@@ -188,6 +210,8 @@ namespace Rise.EditorTools
         private static void BuildPlayerRig()
         {
             Transform world = GameObject.Find("World").transform;
+            Transform oldRig = world.Find("PlayerRig");
+            if (oldRig != null) Object.DestroyImmediate(oldRig.gameObject);
 
             Transform rig = GetOrCreateEmpty("PlayerRig", world);
             rig.position = new Vector3(0f, 1f, 0f);
@@ -210,6 +234,7 @@ namespace Rise.EditorTools
                 1f);
             humanoid.localPosition = Vector3.zero;
 
+            humanoid.gameObject.AddComponent<WalkAnimation>();
             playerGO.AddComponent<PlayerAppearance>();
 
             GameObject pivot = new GameObject("CameraPivot");
@@ -442,13 +467,22 @@ namespace Rise.EditorTools
         {
             BuildHumanoid(parent, name, start, skinColor, shirtColor, pantsColor, hairColor, height);
 
-            TownNPC town = parent.Find(name).gameObject.AddComponent<TownNPC>();
+            GameObject npcGO = parent.Find(name).gameObject;
+
+            TownNPC town = npcGO.AddComponent<TownNPC>();
             town.npcName = npcName;
             town.lines = lines;
             town.marriedLine = marriedLine;
             town.bodyTint = shirtColor;
             town.SetRoute(route);
             town.walkSpeed = walkSpeed;
+
+            CharacterController cc = npcGO.AddComponent<CharacterController>();
+            cc.height = 2f * height;
+            cc.radius = 0.4f;
+            cc.center = new Vector3(0f, 1f * height, 0f);
+
+            npcGO.AddComponent<WalkAnimation>();
         }
 
         private static void BuildRoadLines(Transform parent, Material mat)
@@ -803,37 +837,49 @@ namespace Rise.EditorTools
             Object.DestroyImmediate(hairGO.GetComponent<Collider>());
             SetRendererMaterial(hairGO, hair);
 
-            GameObject armL = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            armL.name = "Arm_L";
-            armL.transform.SetParent(root.transform);
-            armL.transform.localPosition = new Vector3(-0.38f * s, 1.05f * s, 0f);
-            armL.transform.localScale = new Vector3(0.14f * s, 0.38f * s, 0.14f * s);
-            Object.DestroyImmediate(armL.GetComponent<Collider>());
-            SetRendererMaterial(armL, shirt);
-
-            GameObject armR = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            armR.name = "Arm_R";
-            armR.transform.SetParent(root.transform);
-            armR.transform.localPosition = new Vector3(0.38f * s, 1.05f * s, 0f);
-            armR.transform.localScale = new Vector3(0.14f * s, 0.38f * s, 0.14f * s);
-            Object.DestroyImmediate(armR.GetComponent<Collider>());
-            SetRendererMaterial(armR, shirt);
-
+            GameObject legPivotL = new GameObject("LegPivot_L");
+            legPivotL.transform.SetParent(root.transform);
+            legPivotL.transform.localPosition = new Vector3(-0.14f * s, 0.72f * s, 0f);
             GameObject legL = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             legL.name = "Leg_L";
-            legL.transform.SetParent(root.transform);
-            legL.transform.localPosition = new Vector3(-0.14f * s, 0.35f * s, 0f);
+            legL.transform.SetParent(legPivotL.transform);
+            legL.transform.localPosition = new Vector3(0f, -0.37f * s, 0f);
             legL.transform.localScale = new Vector3(0.18f * s, 0.40f * s, 0.18f * s);
             Object.DestroyImmediate(legL.GetComponent<Collider>());
             SetRendererMaterial(legL, pants);
 
+            GameObject legPivotR = new GameObject("LegPivot_R");
+            legPivotR.transform.SetParent(root.transform);
+            legPivotR.transform.localPosition = new Vector3(0.14f * s, 0.72f * s, 0f);
             GameObject legR = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             legR.name = "Leg_R";
-            legR.transform.SetParent(root.transform);
-            legR.transform.localPosition = new Vector3(0.14f * s, 0.35f * s, 0f);
+            legR.transform.SetParent(legPivotR.transform);
+            legR.transform.localPosition = new Vector3(0f, -0.37f * s, 0f);
             legR.transform.localScale = new Vector3(0.18f * s, 0.40f * s, 0.18f * s);
             Object.DestroyImmediate(legR.GetComponent<Collider>());
             SetRendererMaterial(legR, pants);
+
+            GameObject armPivotL = new GameObject("ArmPivot_L");
+            armPivotL.transform.SetParent(root.transform);
+            armPivotL.transform.localPosition = new Vector3(-0.38f * s, 1.28f * s, 0f);
+            GameObject armL = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            armL.name = "Arm_L";
+            armL.transform.SetParent(armPivotL.transform);
+            armL.transform.localPosition = new Vector3(0f, -0.23f * s, 0f);
+            armL.transform.localScale = new Vector3(0.14f * s, 0.38f * s, 0.14f * s);
+            Object.DestroyImmediate(armL.GetComponent<Collider>());
+            SetRendererMaterial(armL, shirt);
+
+            GameObject armPivotR = new GameObject("ArmPivot_R");
+            armPivotR.transform.SetParent(root.transform);
+            armPivotR.transform.localPosition = new Vector3(0.38f * s, 1.28f * s, 0f);
+            GameObject armR = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            armR.name = "Arm_R";
+            armR.transform.SetParent(armPivotR.transform);
+            armR.transform.localPosition = new Vector3(0f, -0.23f * s, 0f);
+            armR.transform.localScale = new Vector3(0.14f * s, 0.38f * s, 0.14f * s);
+            Object.DestroyImmediate(armR.GetComponent<Collider>());
+            SetRendererMaterial(armR, shirt);
 
             return root.transform;
         }
@@ -872,6 +918,28 @@ namespace Rise.EditorTools
                 UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene(), OpenWorldScenePath);
 
             Debug.Log("Rise: Gameplay systems built. Press Play, walk to the yellow work spot, and press E.");
+        }
+
+        [MenuItem("Rise/Setup/Build Cars")]
+        public static void BuildCars()
+        {
+            Scene current = EditorSceneManager.GetActiveScene();
+            if (current.name != OpenWorldSceneName)
+            {
+                if (!EditorUtility.DisplayDialog("Build Cars", "This expects the 'OpenWorld' scene to be active.\n\nContinue?", "Yes, open it", "Cancel"))
+                    return;
+                EditorSceneManager.OpenScene(OpenWorldScenePath);
+            }
+
+            materialsFolder = MaterialsFolder;
+            Directory.CreateDirectory(materialsFolder);
+
+            EnsureParkingLot();
+
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene(), OpenWorldScenePath);
+
+            Debug.Log("Rise: Cars and parking lot built.");
         }
 
         private static GameManager EnsureGameManager()
@@ -1056,6 +1124,157 @@ namespace Rise.EditorTools
             text.verticalOverflow = VerticalWrapMode.Overflow;
             text.raycastTarget = false;
             return text;
+        }
+
+        private static void EnsureParkingLot()
+        {
+            Transform world = GameObject.Find("World").transform;
+            Transform old = world.Find("ParkingLot");
+            if (old != null) Object.DestroyImmediate(old.gameObject);
+
+            Transform lot = new GameObject("ParkingLot").transform;
+            lot.SetParent(world);
+
+            Material asphalt = CreateDetailedMaterial("M_Asphalt", new Color(0.2f, 0.2f, 0.22f), 0.02f, 0.8f);
+            GameObject pad = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            pad.name = "ParkingPad";
+            pad.transform.SetParent(lot);
+            pad.transform.position = new Vector3(32f, 0.02f, -10f);
+            pad.transform.localScale = new Vector3(36f, 0.04f, 10f);
+            SetRendererMaterial(pad, asphalt);
+
+            Material lineMat = CreateMaterial("M_ParkingLine", new Color(0.9f, 0.9f, 0.9f));
+            for (int i = 0; i <= 9; i++)
+            {
+                float x = 15.25f + i * 3.5f;
+                GameObject line = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                line.name = "ParkingLine_" + i;
+                line.transform.SetParent(lot);
+                line.transform.position = new Vector3(x, 0.045f, -10f);
+                line.transform.localScale = new Vector3(0.08f, 0.02f, 9f);
+                SetRendererMaterial(line, lineMat);
+                Object.DestroyImmediate(line.GetComponent<Collider>());
+            }
+
+            string[] brands = { "Mercedes-Benz", "BMW", "Toyota", "Honda", "Ford", "Range Rover", "Tesla", "Chevrolet", "Lexus" };
+            Color[] colors =
+            {
+                new Color(0.75f, 0.75f, 0.75f), new Color(0.11f, 0.41f, 0.83f), new Color(0.8f, 0f, 0f),
+                Color.white, new Color(0f, 0.2f, 0.47f), new Color(0.1f, 0.1f, 0.1f),
+                new Color(0.91f, 0.13f, 0.15f), new Color(1f, 0.84f, 0f), new Color(0.5f, 0.5f, 0.5f)
+            };
+            int[] repReqs = { 0, 30, 0, 0, 0, 30, 60, 0, 60 };
+
+            for (int i = 0; i < 9; i++)
+            {
+                float x = 17f + i * 3.5f;
+                EnsureCar(lot, brands[i], colors[i], repReqs[i], new Vector3(x, 0f, -10f));
+            }
+        }
+
+        private static void EnsureCar(Transform parent, string brand, Color color, int minRep, Vector3 position)
+        {
+            Material bodyMat = CreateMaterial("M_Car_" + brand, color);
+            Material glassMat = CreateMaterial("M_CarGlass", new Color(0.3f, 0.4f, 0.55f, 0.6f));
+            Material wheelMat = CreateMaterial("M_CarWheel", new Color(0.12f, 0.12f, 0.12f));
+            Material headlightMat = CreateMaterial("M_Headlight", new Color(1f, 0.95f, 0.7f));
+            Material taillightMat = CreateMaterial("M_Taillight", new Color(0.8f, 0.1f, 0.1f));
+
+            GameObject car = new GameObject(brand);
+            car.transform.SetParent(parent);
+            car.transform.position = position;
+
+            GameObject body = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            body.name = "Body";
+            body.transform.SetParent(car.transform);
+            body.transform.localPosition = new Vector3(0f, 0.55f, 0f);
+            body.transform.localScale = new Vector3(1.8f, 0.7f, 4f);
+            SetRendererMaterial(body, bodyMat);
+            Object.DestroyImmediate(body.GetComponent<Collider>());
+
+            GameObject cabin = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            cabin.name = "Cabin";
+            cabin.transform.SetParent(car.transform);
+            cabin.transform.localPosition = new Vector3(0f, 1.05f, -0.2f);
+            cabin.transform.localScale = new Vector3(1.6f, 0.55f, 2f);
+            SetRendererMaterial(cabin, glassMat);
+            Object.DestroyImmediate(cabin.GetComponent<Collider>());
+
+            Vector3[] wheelPos =
+            {
+                new Vector3(-0.9f, 0.25f, 1.2f), new Vector3(0.9f, 0.25f, 1.2f),
+                new Vector3(-0.9f, 0.25f, -1.2f), new Vector3(0.9f, 0.25f, -1.2f)
+            };
+            foreach (Vector3 wp in wheelPos)
+            {
+                GameObject wheel = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                wheel.name = "Wheel";
+                wheel.transform.SetParent(car.transform);
+                wheel.transform.localPosition = wp;
+                wheel.transform.localScale = new Vector3(0.4f, 0.15f, 0.4f);
+                wheel.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+                SetRendererMaterial(wheel, wheelMat);
+                Object.DestroyImmediate(wheel.GetComponent<Collider>());
+            }
+
+            Vector3[] hlPos = { new Vector3(-0.6f, 0.55f, 2.02f), new Vector3(0.6f, 0.55f, 2.02f) };
+            foreach (Vector3 hp in hlPos)
+            {
+                GameObject hl = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                hl.name = "Headlight";
+                hl.transform.SetParent(car.transform);
+                hl.transform.localPosition = hp;
+                hl.transform.localScale = new Vector3(0.3f, 0.2f, 0.05f);
+                SetRendererMaterial(hl, headlightMat);
+                Object.DestroyImmediate(hl.GetComponent<Collider>());
+            }
+
+            Vector3[] tlPos = { new Vector3(-0.6f, 0.55f, -2.02f), new Vector3(0.6f, 0.55f, -2.02f) };
+            foreach (Vector3 tp in tlPos)
+            {
+                GameObject tl = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                tl.name = "Taillight";
+                tl.transform.SetParent(car.transform);
+                tl.transform.localPosition = tp;
+                tl.transform.localScale = new Vector3(0.25f, 0.15f, 0.05f);
+                SetRendererMaterial(tl, taillightMat);
+                Object.DestroyImmediate(tl.GetComponent<Collider>());
+            }
+
+            BoxCollider col = car.AddComponent<BoxCollider>();
+            col.size = new Vector3(2f, 1.2f, 4.2f);
+            col.center = new Vector3(0f, 0.6f, 0f);
+
+            GameObject labelGO = new GameObject("BrandLabel");
+            labelGO.transform.SetParent(car.transform);
+            labelGO.transform.localPosition = new Vector3(0f, 1.7f, 0f);
+            labelGO.transform.localRotation = Quaternion.identity;
+
+            Canvas labelCanvas = labelGO.AddComponent<Canvas>();
+            labelCanvas.renderMode = RenderMode.WorldSpace;
+            RectTransform canvasRT = labelGO.GetComponent<RectTransform>();
+            canvasRT.sizeDelta = new Vector2(4f, 0.6f);
+            canvasRT.localScale = Vector3.one * 0.05f;
+
+            GameObject textGO = new GameObject("Text");
+            textGO.transform.SetParent(labelGO.transform, false);
+            RectTransform textRT = textGO.AddComponent<RectTransform>();
+            textRT.anchorMin = Vector2.zero;
+            textRT.anchorMax = Vector2.one;
+            textRT.sizeDelta = Vector2.zero;
+
+            Text label = textGO.AddComponent<Text>();
+            label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            label.fontSize = 28;
+            label.alignment = TextAnchor.MiddleCenter;
+            label.color = Color.white;
+            label.text = brand;
+            label.horizontalOverflow = HorizontalWrapMode.Overflow;
+
+            CarController cc = car.AddComponent<CarController>();
+            cc.brandName = brand;
+            cc.brandColor = color;
+            cc.minRep = minRep;
         }
     }
 }

@@ -66,6 +66,14 @@ namespace Rise.UI
             ClothingStand clothing = gameManager.ActiveClothingShop;
             Partner partner = gameManager.Partner;
             TownNPC townNPC = gameManager.ActiveTownNPC;
+            CarController activeCar = gameManager.ActiveCar;
+
+            if (activeCar != null && activeCar.IsDriving)
+            {
+                SetText(shopText, "Driving " + activeCar.brandName + "\nWASD: steer  Space: brake  E: exit");
+                if (workText != null) workText.text = "";
+                return;
+            }
             if (shop != null && shop.IsOpen)
             {
                 SetText(shopText, shop.GetMenuText());
@@ -109,6 +117,13 @@ namespace Rise.UI
             else if (partner != null && partner.IsPlayerInRange)
             {
                 hint = "Press E to talk to Maya";
+            }
+            else if (TryNearCar(out CarController nearCar))
+            {
+                if (nearCar.IsLocked(gameManager))
+                    hint = nearCar.brandName + " — Requires Rep " + nearCar.minRep;
+                else
+                    hint = "Press E to drive " + nearCar.brandName;
             }
             else if (TryGetTalkableNPC(out TownNPC talkNPC))
             {
@@ -160,6 +175,21 @@ namespace Rise.UI
                 if (npc != null && npc.IsPlayerInRange && !npc.IsOpen)
                 {
                     talkable = npc;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private bool TryNearCar(out CarController nearCar)
+        {
+            nearCar = null;
+            for (int i = 0; i < gameManager.CarCount; i++)
+            {
+                CarController car = gameManager.GetCar(i);
+                if (car != null && car.IsPlayerInRange && !car.IsDriving)
+                {
+                    nearCar = car;
                     return true;
                 }
             }

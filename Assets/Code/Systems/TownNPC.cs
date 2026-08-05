@@ -44,6 +44,9 @@ namespace Rise.Systems
         private Color[] _shirtPalette;
         private Color[] _pantsPalette;
 
+        private CharacterController _cc;
+        private WalkAnimation _walkAnim;
+
         public bool IsOpen => _isOpen;
         public bool IsPlayerInRange => _playerInRange;
 
@@ -77,6 +80,8 @@ namespace Rise.Systems
             InitOutfitPalette();
             ApplyOutfitColor(bodyTint, GetPantsForShirt(bodyTint));
             _outfitTimer = Random.Range(60f, _outfitInterval);
+            _cc = GetComponent<CharacterController>();
+            _walkAnim = GetComponent<WalkAnimation>();
 
             if (waypoints.Length > 0)
             {
@@ -206,11 +211,16 @@ namespace Rise.Systems
                 return;
             }
 
-            transform.position += to.normalized * walkSpeed * Time.deltaTime;
+            Vector3 motion = to.normalized * walkSpeed + Vector3.down * 2f;
+            if (_cc != null) _cc.Move(motion * Time.deltaTime);
+            else transform.position += to.normalized * walkSpeed * Time.deltaTime;
             if (to.magnitude > 0.1f)
             {
                 transform.rotation = Quaternion.LookRotation(to.normalized);
             }
+
+            bool moving = !_idling && !_isOpen && waypoints != null && waypoints.Length > 0;
+            if (_walkAnim != null) _walkAnim.SetSpeed(moving ? walkSpeed : 0f);
 
             _outfitTimer -= Time.deltaTime;
             if (_outfitTimer <= 0f)
