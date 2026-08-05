@@ -74,7 +74,6 @@ namespace Rise.Systems
                 else Open();
             }
 
-            int playerMoney = _gameManager != null ? _gameManager.Wallet.Money : 0;
             if (!IsDefeated && playerMoney > RivalMoney + 2000 && _gameManager.Rep != null && _gameManager.Rep.Reputation >= 80)
             {
                 IsDefeated = true;
