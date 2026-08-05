@@ -54,6 +54,15 @@ namespace Rise.Systems
         {
             if (_gameManager == null || _player == null || items.Count == 0) return;
 
+            if (_gameManager.Needs == null)
+            {
+                _gameManager.Needs = _player.GetComponent<PlayerNeeds>();
+                if (_gameManager.Needs == null)
+                    _gameManager.Needs = _player.gameObject.AddComponent<PlayerNeeds>();
+                if (_gameManager.Needs != null)
+                    _gameManager.Needs.Configure(_gameManager);
+            }
+
             _playerInRange = Vector3.Distance(transform.position, _player.position) <= interactRadius;
 
             if (_isOpen && !_playerInRange)
@@ -115,20 +124,27 @@ namespace Rise.Systems
                 switch (item.itemType)
                 {
                     case ShopItemType.Food:
-                        _gameManager.Needs.AddFood();
-                        Debug.Log("Food bought! FoodCount = " + _gameManager.Needs.FoodCount);
-                        SetMessage("Bought " + item.itemName + "  Food x" + _gameManager.Needs.FoodCount + "  (press Q to eat)");
+                        if (_gameManager.Needs != null)
+                        {
+                            _gameManager.Needs.AddFood();
+                            SetMessage("Bought " + item.itemName + "  Food x" + _gameManager.Needs.FoodCount + "  (press Q to eat)");
+                        }
+                        else
+                        {
+                            Debug.LogError("ShopStand: GameManager.Needs is null!");
+                            SetMessage("Bought " + item.itemName + " (food could not be added)");
+                        }
                         break;
                     case ShopItemType.GiftFlower:
-                        _gameManager.Needs.AddGift(ShopItemType.GiftFlower);
+                        if (_gameManager.Needs != null) _gameManager.Needs.AddGift(ShopItemType.GiftFlower);
                         SetMessage("Bought " + item.itemName + " (a gift)");
                         break;
                     case ShopItemType.GiftChocolate:
-                        _gameManager.Needs.AddGift(ShopItemType.GiftChocolate);
+                        if (_gameManager.Needs != null) _gameManager.Needs.AddGift(ShopItemType.GiftChocolate);
                         SetMessage("Bought " + item.itemName + " (a gift)");
                         break;
                     case ShopItemType.GiftRing:
-                        _gameManager.Needs.AddGift(ShopItemType.GiftRing);
+                        if (_gameManager.Needs != null) _gameManager.Needs.AddGift(ShopItemType.GiftRing);
                         SetMessage("Bought " + item.itemName + " (a gift)");
                         break;
                     default:
