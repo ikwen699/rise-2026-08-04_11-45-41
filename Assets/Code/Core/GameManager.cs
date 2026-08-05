@@ -32,6 +32,15 @@ namespace Rise.Core
         public TimeSystem Clock { get; private set; }
         public JobSystem Jobs { get; private set; }
         public PlayerNeeds Needs { get; private set; }
+
+        public void EnsureNeeds()
+        {
+            if (Needs != null) return;
+            if (_player == null) return;
+            Needs = _player.GetComponent<PlayerNeeds>();
+            if (Needs == null) Needs = _player.gameObject.AddComponent<PlayerNeeds>();
+            if (Needs != null) Needs.Configure(this);
+        }
         public ShopStand ActiveShop { get; set; }
         public Partner Partner { get; private set; }
         public TownNPC ActiveTownNPC { get; set; }
@@ -124,6 +133,7 @@ namespace Rise.Core
                 Needs.Configure(this);
                 Needs.OnExhausted += HandleExhausted;
             }
+            Debug.Log("Rise: FindPlayer - Player=" + (playerGO != null ? playerGO.name : "null") + " Needs=" + (Needs != null ? "OK" : "NULL"));
         }
 
         private void FindSun()

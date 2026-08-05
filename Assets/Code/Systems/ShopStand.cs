@@ -54,15 +54,6 @@ namespace Rise.Systems
         {
             if (_gameManager == null || _player == null || items.Count == 0) return;
 
-            if (_gameManager.Needs == null)
-            {
-                _gameManager.Needs = _player.GetComponent<PlayerNeeds>();
-                if (_gameManager.Needs == null)
-                    _gameManager.Needs = _player.gameObject.AddComponent<PlayerNeeds>();
-                if (_gameManager.Needs != null)
-                    _gameManager.Needs.Configure(_gameManager);
-            }
-
             _playerInRange = Vector3.Distance(transform.position, _player.position) <= interactRadius;
 
             if (_isOpen && !_playerInRange)
