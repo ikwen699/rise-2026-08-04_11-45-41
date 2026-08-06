@@ -212,6 +212,7 @@ namespace Rise.Systems
         private void Update()
         {
             if (_gameManager == null || _player == null) return;
+            if (_isHome) return;
 
             _playerInRange = Vector3.Distance(transform.position, _player.position) <= interactRadius;
 
@@ -224,11 +225,11 @@ namespace Rise.Systems
                     int hour = Mathf.FloorToInt(_gameManager.Clock.HourOfDay) % 24;
                     if (hour >= homeHourEnter || hour < homeHourLeave)
                     {
-                        if (!_isHome) GoHome();
+                        if (!_isHome) { GoHome(); return; }
                     }
                     else
                     {
-                        if (_isHome) LeaveHome();
+                        if (_isHome) { LeaveHome(); return; }
                     }
                 }
             }
@@ -307,7 +308,7 @@ namespace Rise.Systems
             }
 
             Vector3 motion = to.normalized * walkSpeed + Vector3.down * 2f;
-            if (_cc != null) _cc.Move(motion * Time.deltaTime);
+            if (_cc != null && _cc.enabled) _cc.Move(motion * Time.deltaTime);
             else transform.position += to.normalized * walkSpeed * Time.deltaTime;
             if (to.magnitude > 0.1f)
             {
