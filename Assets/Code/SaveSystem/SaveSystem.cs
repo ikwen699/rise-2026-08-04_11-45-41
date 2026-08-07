@@ -38,6 +38,11 @@ namespace Rise.SaveSystem
 
         public static string SavePath => Path.Combine(Application.persistentDataPath, FileName);
 
+        public static bool HasSave()
+        {
+            return File.Exists(SavePath);
+        }
+
         public static void Save(SaveData data)
         {
             string json = JsonUtility.ToJson(data, true);

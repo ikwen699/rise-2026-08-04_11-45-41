@@ -43,6 +43,9 @@ namespace Rise.Core
         public SkillSystem Skills { get; private set; }
         public WeatherSystem Weather { get; private set; }
         public BulletinBoard Bulletin { get; private set; }
+        public GasStation Gas { get; private set; }
+        public PauseMenu PauseUI { get; private set; }
+        public bool IsPaused => PauseUI != null && PauseUI.IsPaused;
 
         public void EnsureNeeds()
         {
@@ -148,6 +151,8 @@ namespace Rise.Core
             SetupCars();
             SetupDoors();
             SetupBulletin();
+            SetupGasStation();
+            SetupPauseMenu();
             SetupRival();
             Quests.Configure(this);
             Properties.Configure(this);
@@ -364,6 +369,22 @@ namespace Rise.Core
                 board.Configure(_player, this);
                 Bulletin = board;
             }
+        }
+
+        private void SetupGasStation()
+        {
+            GasStation gas = FindAnyObjectByType<GasStation>();
+            if (gas != null)
+            {
+                gas.Configure(_player, this);
+                Gas = gas;
+            }
+        }
+
+        private void SetupPauseMenu()
+        {
+            PauseUI = gameObject.AddComponent<PauseMenu>();
+            PauseUI.Configure(this);
         }
 
         private void SetupRival()

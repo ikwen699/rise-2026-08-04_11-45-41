@@ -62,6 +62,18 @@ namespace Rise.UI
         {
             if (gameManager == null) return;
 
+            if (gameManager.IsPaused)
+            {
+                if (_hudTexts != null)
+                {
+                    foreach (Text t in _hudTexts)
+                    {
+                        if (t != null) t.enabled = false;
+                    }
+                }
+                return;
+            }
+
             if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame)
             {
                 _hudVisible = !_hudVisible;
@@ -244,6 +256,29 @@ namespace Rise.UI
                     hint = "Press E to enter " + nearDoor.BuildingName + "  |  Press F to buy for $" + prop.cost;
                 else
                     hint = "Press E to enter " + nearDoor.BuildingName;
+            }
+            else if (gameManager.Gas != null && gameManager.Gas.IsPlayerInRange)
+            {
+                CarController nearCar = null;
+                float minDist = 10f;
+                for (int i = 0; i < gameManager.CarCount; i++)
+                {
+                    CarController c = gameManager.GetCar(i);
+                    if (c != null && !c.IsDriving)
+                    {
+                        float d = Vector3.Distance(gameManager.Gas.transform.position, c.transform.position);
+                        if (d < minDist) { minDist = d; nearCar = c; }
+                    }
+                }
+                if (nearCar != null && nearCar.FuelPercent < 0.99f)
+                {
+                    int cost = gameManager.Gas.GetRefuelCost(nearCar);
+                    hint = "Press E to refuel " + nearCar.brandName + " ($" + cost + ")";
+                }
+                else
+                {
+                    hint = "Gas Station — Tank full or no car nearby";
+                }
             }
             else
             {

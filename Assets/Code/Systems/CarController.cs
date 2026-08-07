@@ -39,6 +39,7 @@ namespace Rise.Systems
         public bool IsPlayerInRange => _playerInRange;
         public float Fuel => _fuel;
         public float FuelPercent => _fuel / MaxFuel;
+        public float FuelCapacity => MaxFuel;
         public bool IsLocked(Core.GameManager gm) => gm != null && gm.Rep != null && gm.Rep.Reputation < minRep;
 
         public void Configure(Transform player, Core.GameManager gameManager)

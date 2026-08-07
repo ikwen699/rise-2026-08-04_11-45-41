@@ -122,6 +122,7 @@ namespace Rise.EditorTools
 
             EnsureEnvironment();
             BuildTownDetails();
+            BuildGasStation();
 
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
                 UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
@@ -586,6 +587,94 @@ namespace Rise.EditorTools
             pmr.material = postMat;
 
             board.AddComponent<BulletinBoard>();
+        }
+
+        private static void BuildGasStation()
+        {
+            GameObject worldGO = GameObject.Find("World");
+            Transform world = worldGO != null ? worldGO.transform : new GameObject("World").transform;
+
+            Transform old = world.Find("GasStation");
+            if (old != null) Object.DestroyImmediate(old.gameObject);
+
+            Transform station = new GameObject("GasStation").transform;
+            station.SetParent(world);
+            station.position = new Vector3(40f, 0f, 0f);
+
+            Material pumpMat = CreateMaterial("M_GasPump", new Color(0.8f, 0.2f, 0.15f));
+            Material canopyMat = CreateMaterial("M_GasCanopy", new Color(0.85f, 0.85f, 0.88f));
+            Material poleMat = CreateMaterial("M_GasPole", new Color(0.5f, 0.5f, 0.52f));
+            Material signMat = CreateMaterial("M_GasSign", new Color(0.1f, 0.5f, 0.8f));
+
+            GameObject canopy = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            canopy.name = "Canopy";
+            canopy.transform.SetParent(station);
+            canopy.transform.position = new Vector3(0f, 3.5f, 0f);
+            canopy.transform.localScale = new Vector3(8f, 0.2f, 5f);
+            SetRendererMaterial(canopy, canopyMat);
+
+            for (int i = 0; i < 4; i++)
+            {
+                float x = i < 2 ? -3f : 3f;
+                float z = i % 2 == 0 ? -1.5f : 1.5f;
+                GameObject pole = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                pole.name = "Pole_" + i;
+                pole.transform.SetParent(station);
+                pole.transform.position = new Vector3(x, 1.75f, z);
+                pole.transform.localScale = new Vector3(0.15f, 1.75f, 0.15f);
+                SetRendererMaterial(pole, poleMat);
+            }
+
+            for (int i = 0; i < 2; i++)
+            {
+                float z = i == 0 ? -1.5f : 1.5f;
+                GameObject pump = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                pump.name = "Pump_" + i;
+                pump.transform.SetParent(station);
+                pump.transform.position = new Vector3(0f, 0.75f, z);
+                pump.transform.localScale = new Vector3(0.6f, 1.5f, 0.4f);
+                SetRendererMaterial(pump, pumpMat);
+
+                GameObject nozzle = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                nozzle.name = "Nozzle_" + i;
+                nozzle.transform.SetParent(pump.transform);
+                nozzle.transform.localPosition = new Vector3(0.4f, 0.3f, 0f);
+                nozzle.transform.localScale = new Vector3(0.08f, 0.2f, 0.08f);
+                nozzle.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+                SetRendererMaterial(nozzle, poleMat);
+            }
+
+            GameObject sign = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            sign.name = "Sign";
+            sign.transform.SetParent(station);
+            sign.transform.position = new Vector3(0f, 4.5f, 0f);
+            sign.transform.localScale = new Vector3(3f, 0.8f, 0.1f);
+            SetRendererMaterial(sign, signMat);
+
+            GameObject signLabel = new GameObject("SignLabel");
+            signLabel.transform.SetParent(sign.transform);
+            signLabel.transform.localPosition = new Vector3(0f, 0f, -0.06f);
+            Canvas signCanvas = signLabel.AddComponent<Canvas>();
+            signCanvas.renderMode = RenderMode.WorldSpace;
+            RectTransform signRect = signLabel.GetComponent<RectTransform>();
+            signRect.sizeDelta = new Vector2(3f, 0.8f);
+            TextMesh signText = signLabel.AddComponent<TextMesh>();
+            signText.text = "GAS";
+            signText.fontSize = 60;
+            signText.characterSize = 0.15f;
+            signText.anchor = TextAnchor.MiddleCenter;
+            signText.alignment = TextAlignment.Center;
+            signText.color = Color.white;
+
+            GasStation gas = station.gameObject.AddComponent<GasStation>();
+
+            GameObject pad = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            pad.name = "GasPad";
+            pad.transform.SetParent(station);
+            pad.transform.position = new Vector3(0f, 0.02f, 0f);
+            pad.transform.localScale = new Vector3(10f, 0.04f, 7f);
+            Material asphalt = CreateDetailedMaterial("M_GasAsphalt", new Color(0.22f, 0.22f, 0.24f), 0.02f, 0.8f);
+            SetRendererMaterial(pad, asphalt);
         }
 
         private static void BuildTownspeople(Transform parent, Material skin)
