@@ -23,6 +23,12 @@ namespace Rise.Systems
         public AudioClip buyClip;
         public AudioClip questCompleteClip;
 
+        [Header("Radio")]
+        public AudioClip[] radioA;
+        public AudioClip[] radioB;
+        public AudioClip[] radioC;
+        public string[] radioNames = { "Rise FM", "Classic Hits", "Chill Vibes" };
+
         private AudioSource _musicA;
         private AudioSource _musicB;
         private AudioSource _currentMusic;
@@ -31,6 +37,10 @@ namespace Rise.Systems
         private AudioSource _rainSource;
         private bool _usingMusicA = true;
         private float _thunderTimer;
+        private AudioSource _radioSource;
+        private int _radioStation;
+        private int _radioTrack;
+        private bool _radioOn;
 
         private void Awake()
         {
@@ -170,6 +180,84 @@ namespace Rise.Systems
             float targetVol = Mathf.Clamp01(speed / 20f) * 0.4f;
             src.volume = Mathf.Lerp(src.volume, targetVol, Time.deltaTime * 5f);
             src.pitch = Mathf.Lerp(0.8f, 1.5f, speed / 25f);
+        }
+
+        public void StartRadio(Transform parent)
+        {
+            if (_radioSource != null) return;
+            GameObject go = new GameObject("CarRadio");
+            go.transform.SetParent(parent);
+            go.transform.localPosition = Vector3.zero;
+            _radioSource = go.AddComponent<AudioSource>();
+            _radioSource.loop = true;
+            _radioSource.volume = 0f;
+            _radioOn = true;
+            _radioStation = 0;
+            _radioTrack = 0;
+            PlayRadioTrack();
+        }
+
+        public void StopRadio()
+        {
+            _radioOn = false;
+            if (_radioSource != null)
+            {
+                _radioSource.Stop();
+                Destroy(_radioSource.gameObject);
+                _radioSource = null;
+            }
+        }
+
+        public void NextStation()
+        {
+            _radioStation = (_radioStation + 1) % 3;
+            _radioTrack = 0;
+            PlayRadioTrack();
+        }
+
+        public void PrevStation()
+        {
+            _radioStation = (_radioStation + 2) % 3;
+            _radioTrack = 0;
+            PlayRadioTrack();
+        }
+
+        public string GetCurrentRadioName()
+        {
+            if (!_radioOn || _radioSource == null) return "";
+            if (radioNames == null || radioNames.Length == 0) return "";
+            return radioNames[_radioStation % radioNames.Length];
+        }
+
+        public void UpdateRadio(float carSpeed)
+        {
+            if (!_radioOn || _radioSource == null) return;
+
+            if (!_radioSource.isPlaying && _radioSource.clip != null)
+            {
+                _radioTrack++;
+                PlayRadioTrack();
+            }
+
+            float targetVol = Mathf.Clamp01(carSpeed / 15f) * musicVolume * 0.6f;
+            if (Mathf.Abs(carSpeed) < 0.5f) targetVol = musicVolume * 0.3f;
+            _radioSource.volume = Mathf.Lerp(_radioSource.volume, targetVol, Time.deltaTime * 3f);
+        }
+
+        private void PlayRadioTrack()
+        {
+            if (_radioSource == null) return;
+            AudioClip[] tracks = _radioStation switch
+            {
+                0 => radioA,
+                1 => radioB,
+                2 => radioC,
+                _ => radioA
+            };
+            if (tracks == null || tracks.Length == 0) return;
+            _radioTrack = _radioTrack % tracks.Length;
+            _radioSource.clip = tracks[_radioTrack];
+            _radioSource.Play();
         }
     }
 }

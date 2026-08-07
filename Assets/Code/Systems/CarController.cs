@@ -30,6 +30,8 @@ namespace Rise.Systems
 
         private static InputAction s_moveAction;
         private static InputAction s_brakeAction;
+        private static InputAction s_radioNext;
+        private static InputAction s_radioPrev;
         private static bool s_actionsCreated;
         private static bool s_eConsumedThisFrame;
 
@@ -56,6 +58,8 @@ namespace Rise.Systems
                 .With("Left", "<Keyboard>/a")
                 .With("Right", "<Keyboard>/d");
             s_brakeAction = new InputAction("CarBrake", InputActionType.Button, "<Keyboard>/space");
+            s_radioNext = new InputAction("RadioNext", InputActionType.Button, "<Keyboard>/rightArrow");
+            s_radioPrev = new InputAction("RadioPrev", InputActionType.Button, "<Keyboard>/leftArrow");
         }
 
         private void Update()
@@ -106,8 +110,13 @@ namespace Rise.Systems
             _drivingXpAccumulator = 0f;
             s_moveAction.Enable();
             s_brakeAction.Enable();
+            s_radioNext.Enable();
+            s_radioPrev.Enable();
             if (_gameManager.Audio != null)
+            {
                 _engineSource = _gameManager.Audio.CreateCarEngine(transform);
+                _gameManager.Audio.StartRadio(transform);
+            }
             Debug.Log("[CarController] Started driving " + brandName);
             _gameManager.EnterCar(this);
         }
@@ -117,8 +126,11 @@ namespace Rise.Systems
             _isDriving = false;
             _currentSpeed = 0f;
             StopEngine();
+            if (_gameManager.Audio != null) _gameManager.Audio.StopRadio();
             if (s_moveAction != null) s_moveAction.Disable();
             if (s_brakeAction != null) s_brakeAction.Disable();
+            if (s_radioNext != null) s_radioNext.Disable();
+            if (s_radioPrev != null) s_radioPrev.Disable();
             Debug.Log("[CarController] Stopped driving " + brandName);
             _gameManager.ExitCar();
         }
@@ -129,6 +141,11 @@ namespace Rise.Systems
             _isDriving = false;
             _currentSpeed = 0f;
             StopEngine();
+            if (_gameManager.Audio != null) _gameManager.Audio.StopRadio();
+            if (s_moveAction != null) s_moveAction.Disable();
+            if (s_brakeAction != null) s_brakeAction.Disable();
+            if (s_radioNext != null) s_radioNext.Disable();
+            if (s_radioPrev != null) s_radioPrev.Disable();
             if (s_moveAction != null) s_moveAction.Disable();
             if (s_brakeAction != null) s_brakeAction.Disable();
             Debug.Log("[CarController] Force-stopped " + brandName);
@@ -177,7 +194,15 @@ namespace Rise.Systems
             transform.Translate(0f, 0f, _currentSpeed * Time.deltaTime);
 
             if (_gameManager.Audio != null)
+            {
                 _gameManager.Audio.UpdateCarEngine(_engineSource, Mathf.Abs(_currentSpeed), engineClip);
+                _gameManager.Audio.UpdateRadio(Mathf.Abs(_currentSpeed));
+            }
+
+            if (s_radioNext != null && s_radioNext.WasPressedThisFrame())
+                _gameManager.Audio?.NextStation();
+            if (s_radioPrev != null && s_radioPrev.WasPressedThisFrame())
+                _gameManager.Audio?.PrevStation();
 
             if (Mathf.Abs(_currentSpeed) > 1f)
             {

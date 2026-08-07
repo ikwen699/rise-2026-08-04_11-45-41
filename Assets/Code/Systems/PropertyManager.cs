@@ -46,6 +46,14 @@ namespace Rise.Systems
             return names.ToArray();
         }
 
+        public int GetOwnedPropertyCount()
+        {
+            int count = 0;
+            foreach (PropertyData p in _properties)
+                if (p.owned) count++;
+            return count;
+        }
+
         private void InitProperties()
         {
             _properties.Clear();

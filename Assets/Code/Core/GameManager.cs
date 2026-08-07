@@ -42,6 +42,7 @@ namespace Rise.Core
         public PropertyManager Properties { get; private set; }
         public SkillSystem Skills { get; private set; }
         public WeatherSystem Weather { get; private set; }
+        public BulletinBoard Bulletin { get; private set; }
 
         public void EnsureNeeds()
         {
@@ -74,6 +75,7 @@ namespace Rise.Core
         private CinemachineCamera _cmCamera;
         private Transform _cmFollow;
         private Transform _cmLookAt;
+        private WorkMinigame _activeMinigame;
 
         public int ShopCount => _shops.Count;
         public ShopStand GetShop(int index) => _shops[index];
@@ -145,6 +147,7 @@ namespace Rise.Core
             SetupTownspeople();
             SetupCars();
             SetupDoors();
+            SetupBulletin();
             SetupRival();
             Quests.Configure(this);
             Properties.Configure(this);
@@ -353,6 +356,16 @@ namespace Rise.Core
             }
         }
 
+        private void SetupBulletin()
+        {
+            BulletinBoard board = FindAnyObjectByType<BulletinBoard>();
+            if (board != null)
+            {
+                board.Configure(_player, this);
+                Bulletin = board;
+            }
+        }
+
         private void SetupRival()
         {
             Rival rival = FindAnyObjectByType<Rival>();
@@ -412,7 +425,15 @@ namespace Rise.Core
 
             float gameHours = deltaTime / Clock.SecondsPerGameHour;
             float payBonus = Skills != null ? Skills.GetJobPayBonus() : 1f;
-            _jobEarnAccumulator += gameHours * Jobs.CurrentJob.HourlyPay * payBonus;
+            float minigameMult = 1f;
+            if (_activeMinigame != null && _activeMinigame.ResultReady)
+            {
+                minigameMult = _activeMinigame.Multiplier;
+                _activeMinigame.Destroy();
+                _activeMinigame = null;
+                StartMinigame();
+            }
+            _jobEarnAccumulator += gameHours * Jobs.CurrentJob.HourlyPay * payBonus * minigameMult;
             int earned = Mathf.FloorToInt(_jobEarnAccumulator);
             if (earned > 0)
             {
@@ -421,9 +442,33 @@ namespace Rise.Core
                 Jobs.AddEarned(earned);
                 Rep?.AddReputation(1);
                 Skills?.AddXP(SkillName.Business, earned);
-                if (Jobs.CurrentJob.jobName.Contains("Bakery") || Jobs.CurrentJob.jobName.Contains("Restaurant"))
+                if (Jobs.CurrentJob.JobName.Contains("Bakery") || Jobs.CurrentJob.JobName.Contains("Restaurant")
+                    || Jobs.CurrentJob.JobName == "Baker" || Jobs.CurrentJob.JobName == "Chef")
                     Skills?.AddXP(SkillName.Cooking, earned / 2);
             }
+        }
+
+        public void StartMinigame()
+        {
+            if (_activeMinigame != null) return;
+            _activeMinigame = gameObject.AddComponent<WorkMinigame>();
+            _activeMinigame.Create(_player);
+        }
+
+        public void StopMinigame()
+        {
+            if (_activeMinigame != null)
+            {
+                _activeMinigame.Destroy();
+                _activeMinigame = null;
+            }
+        }
+
+        public string GetMinigameResult()
+        {
+            if (_activeMinigame != null && _activeMinigame.ResultReady)
+                return "x" + _activeMinigame.Multiplier;
+            return "";
         }
 
         private void UpdateSunlight()
@@ -550,6 +595,10 @@ namespace Rise.Core
         private int _lastMilestoneMoney;
         private int _lastMilestoneRep;
         private float _townEventTimer;
+        private bool _eventFair;
+        private bool _eventHoliday;
+        private bool _eventCharity;
+        private bool _eventFestival;
         private void UpdatePropertyIncome()
         {
             if (Properties == null || Clock == null) return;
@@ -589,6 +638,39 @@ namespace Rise.Core
                 }
             }
 
+            if (Clock != null)
+            {
+                int day = Clock.Day;
+                if (day >= 10 && !_eventFair)
+                {
+                    _eventFair = true;
+                    Phone.Push("Town Fair!", "The town fair is happening! Visit the park.");
+                    Wallet?.Add(200);
+                    Rep?.AddReputation(10);
+                }
+                if (day >= 20 && !_eventHoliday)
+                {
+                    _eventHoliday = true;
+                    Phone.Push("Holiday Market!", "The holiday market is open! Great deals everywhere.");
+                    Wallet?.Add(300);
+                    Rep?.AddReputation(15);
+                }
+                if (day >= 30 && !_eventCharity)
+                {
+                    _eventCharity = true;
+                    Phone.Push("Charity Run!", "Join the charity run for fitness and town spirit!");
+                    Rep?.AddReputation(20);
+                    Skills?.AddXP(SkillName.Fitness, 50);
+                }
+                if (day >= 40 && !_eventFestival && Quests != null && Quests.AllComplete)
+                {
+                    _eventFestival = true;
+                    Phone.Push("Grand Festival!", "The biggest event of the year! You've earned it.");
+                    Wallet?.Add(500);
+                    Rep?.AddReputation(25);
+                }
+            }
+
             _townEventTimer -= Time.deltaTime;
             if (_townEventTimer <= 0f)
             {
@@ -606,6 +688,7 @@ namespace Rise.Core
             if (Jobs.IsWorking)
             {
                 Jobs.StopWorking();
+                StopMinigame();
                 return;
             }
 
@@ -625,6 +708,7 @@ namespace Rise.Core
             }
 
             Jobs.StartWorking(job, station);
+            StartMinigame();
         }
 
         private void HandleExhausted()

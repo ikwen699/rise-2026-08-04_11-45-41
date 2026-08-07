@@ -555,6 +555,37 @@ namespace Rise.EditorTools
             BuildFences(details, fence);
             BuildBirds(details, birdMat);
             BuildTownspeople(details, skin);
+            BuildBulletinBoard(details);
+        }
+
+        private static void BuildBulletinBoard(Transform parent)
+        {
+            string name = "BulletinBoard";
+            GameObject old = GameObject.Find(name);
+            if (old != null) Object.DestroyImmediate(old);
+
+            Material boardMat = CreateMaterial("M_BulletinBoard", new Color(0.55f, 0.38f, 0.22f));
+            Material postMat = CreateMaterial("M_BulletinPost", new Color(0.45f, 0.30f, 0.18f));
+
+            GameObject board = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            board.name = name;
+            board.transform.SetParent(parent);
+            board.transform.position = new Vector3(3f, 1.5f, -28f);
+            board.transform.localScale = new Vector3(2f, 1.5f, 0.15f);
+            Object.DestroyImmediate(board.GetComponent<Renderer>());
+            MeshRenderer mr = board.AddComponent<MeshRenderer>();
+            mr.material = boardMat;
+
+            GameObject post = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            post.name = name + "_Post";
+            post.transform.SetParent(board.transform);
+            post.transform.localPosition = new Vector3(0f, -1f, 0f);
+            post.transform.localScale = new Vector3(0.12f, 1f, 0.12f);
+            Object.DestroyImmediate(post.GetComponent<Renderer>());
+            MeshRenderer pmr = post.AddComponent<MeshRenderer>();
+            pmr.material = postMat;
+
+            board.AddComponent<BulletinBoard>();
         }
 
         private static void BuildTownspeople(Transform parent, Material skin)
@@ -1247,7 +1278,12 @@ namespace Rise.EditorTools
             JobDefinition general = EnsureJobAsset("Job_GeneralWorker", "General Worker", 30, 0);
             JobDefinition cashier = EnsureJobAsset("Job_Cashier", "Cashier", 60, 200);
             JobDefinition manager = EnsureJobAsset("Job_Manager", "Manager", 120, 1000);
-            EnsureWorkStations(general, cashier, manager);
+            JobDefinition delivery = EnsureJobAsset("Job_DeliveryDriver", "Delivery Driver", 45, 100);
+            JobDefinition farmer = EnsureJobAsset("Job_Farmer", "Farmer", 40, 50);
+            JobDefinition baker = EnsureJobAsset("Job_Baker", "Baker", 55, 300);
+            JobDefinition chef = EnsureJobAsset("Job_Chef", "Chef", 75, 500);
+            JobDefinition bankTeller = EnsureJobAsset("Job_BankTeller", "Bank Teller", 90, 750);
+            EnsureWorkStations(general, cashier, manager, delivery, farmer, baker, chef, bankTeller);
             EnsurePlayerNeeds();
             EnsureShop();
             EnsureClothingShop();
@@ -1314,7 +1350,8 @@ namespace Rise.EditorTools
             return job;
         }
 
-        private static void EnsureWorkStations(JobDefinition general, JobDefinition cashier, JobDefinition manager)
+        private static void EnsureWorkStations(JobDefinition general, JobDefinition cashier, JobDefinition manager,
+            JobDefinition delivery, JobDefinition farmer, JobDefinition baker, JobDefinition chef, JobDefinition bankTeller)
         {
             GameObject old = GameObject.Find("WorkSpot_Shop");
             if (old != null) Object.DestroyImmediate(old);
@@ -1322,6 +1359,11 @@ namespace Rise.EditorTools
             EnsureStation(general, new Vector3(12f, 0.25f, 14f), "WorkSpot_General");
             EnsureStation(cashier, new Vector3(13f, 0.25f, -6f), "WorkSpot_Cashier");
             EnsureStation(manager, new Vector3(0f, 0.25f, -22f), "WorkSpot_Manager");
+            EnsureStation(delivery, new Vector3(-22f, 0.25f, -30f), "WorkSpot_Delivery");
+            EnsureStation(farmer, new Vector3(20f, 0.25f, 20f), "WorkSpot_Farmer");
+            EnsureStation(baker, new Vector3(-22f, 0.25f, 32f), "WorkSpot_Baker");
+            EnsureStation(chef, new Vector3(22f, 0.25f, -30f), "WorkSpot_Chef");
+            EnsureStation(bankTeller, new Vector3(22f, 0.25f, 32f), "WorkSpot_BankTeller");
         }
 
         private static void EnsureStation(JobDefinition job, Vector3 spot, string name)

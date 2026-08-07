@@ -130,7 +130,9 @@ namespace Rise.UI
                 string fuelBar = "FUEL: " + new string('|', Mathf.RoundToInt(activeCar.FuelPercent * 10));
                 fuelBar += new string('.', 10 - Mathf.RoundToInt(activeCar.FuelPercent * 10));
                 fuelBar += " " + Mathf.RoundToInt(activeCar.FuelPercent * 100) + "%";
-                SetText(shopText, "Driving " + activeCar.brandName + "\nWASD: steer  Space: brake  E: exit\n" + fuelBar);
+                string radio = gameManager.Audio != null ? gameManager.Audio.GetCurrentRadioName() : "";
+                string radioLine = string.IsNullOrEmpty(radio) ? "" : "\nRadio: " + radio + "  <-  ->";
+                SetText(shopText, "Driving " + activeCar.brandName + "\nWASD: steer  Space: brake  E: exit\n" + fuelBar + radioLine);
                 if (workText != null) workText.text = "";
                 return;
             }
@@ -174,10 +176,22 @@ namespace Rise.UI
 
             if (shopText != null && shopText.text.Length > 0) shopText.text = "";
 
+            if (gameManager.Bulletin != null && gameManager.Bulletin.IsOpen)
+            {
+                SetText(shopText, gameManager.Bulletin.GetBulletinText());
+                if (workText != null) workText.text = "";
+                return;
+            }
+
             string hint;
             if (gameManager.Jobs.IsWorking && gameManager.Jobs.CurrentJob != null)
             {
+                string minigameResult = gameManager.GetMinigameResult();
                 hint = "Working as " + gameManager.Jobs.CurrentJob.JobName + " ... (press E to stop)";
+                if (!string.IsNullOrEmpty(minigameResult))
+                    hint += "\n" + minigameResult + " — Press SPACE for next!";
+                else
+                    hint += "\nPress SPACE to hit the target!";
             }
             else if (needs != null && needs.FoodCount > 0 &&
                      (needs.Hunger < needs.MaxHunger || needs.Energy < needs.MaxEnergy))
@@ -202,6 +216,10 @@ namespace Rise.UI
             else if (TryGetTalkableNPC(out TownNPC talkNPC))
             {
                 hint = "Press E to talk to " + talkNPC.npcName;
+            }
+            else if (gameManager.Bulletin != null && gameManager.Bulletin.IsPlayerInRange && !gameManager.Bulletin.IsOpen)
+            {
+                hint = "Press E to read the Town Bulletin";
             }
             else if (gameManager.Rival != null && !gameManager.Rival.IsDefeated && gameManager.Rival.IsPlayerInRange)
             {
