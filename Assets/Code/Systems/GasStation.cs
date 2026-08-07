@@ -37,7 +37,7 @@ namespace Rise.Systems
 
         private void TryRefuel()
         {
-            Core.CarController car = FindNearestCar();
+            CarController car = FindNearestCar();
             if (car == null)
             {
                 _gameManager.Phone?.Push("Gas Station", "No car nearby to refuel.");
@@ -97,7 +97,7 @@ namespace Rise.Systems
             return nearest;
         }
 
-        public int GetRefuelCost(Core.CarController car)
+        public int GetRefuelCost(CarController car)
         {
             if (car == null) return 0;
             float missing = 1f - car.FuelPercent;
