@@ -164,8 +164,8 @@ namespace Rise.EditorTools
             Material roof = CreateDetailedMaterial("M_Roof", new Color(0.5f, 0.22f, 0.15f), 0.08f, 0.25f);
             Material roofDark = CreateDetailedMaterial("M_RoofDark", new Color(0.35f, 0.18f, 0.12f), 0.06f, 0.25f);
 
-            BuildBuilding(town, "House_01", new Vector3(-40f, 0f, 18f), new Vector3(10f, 5f, 10f), houseA, roof);
-            BuildBuilding(town, "House_02", new Vector3(-20f, 0f, 18f), new Vector3(10f, 5f, 10f), houseB, roof);
+            BuildBuilding(town, "House_01", new Vector3(-40f, 0f, 10f), new Vector3(10f, 5f, 10f), houseA, roof);
+            BuildBuilding(town, "House_02", new Vector3(-20f, 0f, 10f), new Vector3(10f, 5f, 10f), houseB, roof);
             BuildBuilding(town, "Shop_01", new Vector3(12f, 0f, 6f), new Vector3(9f, 4f, 10f), shop, roof);
             BuildBuilding(town, "Shop_02", new Vector3(12f, 0f, -14f), new Vector3(9f, 4f, 10f), shop, roof);
             BuildBuilding(town, "TownHall", new Vector3(0f, 0f, -30f), new Vector3(14f, 10f, 14f), houseA, roof);
@@ -206,9 +206,9 @@ namespace Rise.EditorTools
             BuildBuilding(town, "School", new Vector3(-36f, 0f, 32f), new Vector3(14f, 7f, 12f), publicBldg, roof);
             BuildBuilding(town, "Bakery", new Vector3(-22f, 0f, 36f), new Vector3(8f, 4f, 9f), shop, roof);
             BuildBuilding(town, "Bank", new Vector3(22f, 0f, 36f), new Vector3(10f, 5f, 10f), publicBldg, roof);
-            BuildBuilding(town, "House_03", new Vector3(20f, 0f, 18f), new Vector3(10f, 5f, 10f), houseC, roof);
-            BuildBuilding(town, "House_04", new Vector3(40f, 0f, 18f), new Vector3(10f, 5f, 10f), houseA, roofDark);
-            BuildBuilding(town, "House_05", new Vector3(56f, 0f, 18f), new Vector3(10f, 5f, 10f), houseB, roof);
+            BuildBuilding(town, "House_03", new Vector3(20f, 0f, 10f), new Vector3(10f, 5f, 10f), houseC, roof);
+            BuildBuilding(town, "House_04", new Vector3(40f, 0f, 10f), new Vector3(10f, 5f, 10f), houseA, roofDark);
+            BuildBuilding(town, "House_05", new Vector3(56f, 0f, 10f), new Vector3(10f, 5f, 10f), houseB, roof);
             BuildBuilding(town, "Restaurant", new Vector3(22f, 0f, -36f), new Vector3(9f, 5f, 10f), shop, roofDark);
             BuildBuilding(town, "PostOffice", new Vector3(-22f, 0f, -36f), new Vector3(10f, 5f, 10f), publicBldg, roof);
             BuildBuilding(town, "House_06", new Vector3(-40f, 0f, 52f), new Vector3(10f, 5f, 10f), houseC, roof);
@@ -607,7 +607,7 @@ namespace Rise.EditorTools
 
             Transform station = new GameObject("GasStation").transform;
             station.SetParent(world);
-            station.position = new Vector3(40f, 0f, 0f);
+            station.position = new Vector3(50f, 0f, 8f);
 
             Material pumpMat = CreateMaterial("M_GasPump", new Color(0.8f, 0.2f, 0.15f));
             Material canopyMat = CreateMaterial("M_GasCanopy", new Color(0.85f, 0.85f, 0.88f));
@@ -1890,11 +1890,11 @@ namespace Rise.EditorTools
 
             BuildingInfo[] buildings = new BuildingInfo[]
             {
-                new BuildingInfo { name = "House_01", pos = new Vector3(-40f, 0f, 18f), frontZ = 5f, interiorType = DoorInteractable.InteriorType.House },
-                new BuildingInfo { name = "House_02", pos = new Vector3(-20f, 0f, 18f), frontZ = 5f, interiorType = DoorInteractable.InteriorType.House },
-                new BuildingInfo { name = "House_03", pos = new Vector3(20f, 0f, 18f), frontZ = 5f, interiorType = DoorInteractable.InteriorType.House },
-                new BuildingInfo { name = "House_04", pos = new Vector3(40f, 0f, 18f), frontZ = 5f, interiorType = DoorInteractable.InteriorType.House },
-                new BuildingInfo { name = "House_05", pos = new Vector3(56f, 0f, 18f), frontZ = 5f, interiorType = DoorInteractable.InteriorType.House },
+                new BuildingInfo { name = "House_01", pos = new Vector3(-40f, 0f, 10f), frontZ = 5f, interiorType = DoorInteractable.InteriorType.House },
+                new BuildingInfo { name = "House_02", pos = new Vector3(-20f, 0f, 10f), frontZ = 5f, interiorType = DoorInteractable.InteriorType.House },
+                new BuildingInfo { name = "House_03", pos = new Vector3(20f, 0f, 10f), frontZ = 5f, interiorType = DoorInteractable.InteriorType.House },
+                new BuildingInfo { name = "House_04", pos = new Vector3(40f, 0f, 10f), frontZ = 5f, interiorType = DoorInteractable.InteriorType.House },
+                new BuildingInfo { name = "House_05", pos = new Vector3(56f, 0f, 10f), frontZ = 5f, interiorType = DoorInteractable.InteriorType.House },
                 new BuildingInfo { name = "House_06", pos = new Vector3(-40f, 0f, 52f), frontZ = 5f, interiorType = DoorInteractable.InteriorType.House },
                 new BuildingInfo { name = "House_07", pos = new Vector3(-20f, 0f, 52f), frontZ = 5f, interiorType = DoorInteractable.InteriorType.House },
                 new BuildingInfo { name = "House_08", pos = new Vector3(20f, 0f, 52f), frontZ = 5f, interiorType = DoorInteractable.InteriorType.House },

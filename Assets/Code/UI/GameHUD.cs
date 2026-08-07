@@ -111,6 +111,8 @@ namespace Rise.UI
                 return;
             }
 
+            ApplyVisibility();
+
             if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame)
             {
                 ToggleHUD();
@@ -289,7 +291,7 @@ namespace Rise.UI
             }
             else if (gameManager.Gas != null && gameManager.Gas.IsPlayerInRange)
             {
-                CarController nearCar = null;
+                CarController gasCar = null;
                 float minDist = 10f;
                 for (int i = 0; i < gameManager.CarCount; i++)
                 {
@@ -297,13 +299,13 @@ namespace Rise.UI
                     if (c != null && !c.IsDriving)
                     {
                         float d = Vector3.Distance(gameManager.Gas.transform.position, c.transform.position);
-                        if (d < minDist) { minDist = d; nearCar = c; }
+                        if (d < minDist) { minDist = d; gasCar = c; }
                     }
                 }
-                if (nearCar != null && nearCar.FuelPercent < 0.99f)
+                if (gasCar != null && gasCar.FuelPercent < 0.99f)
                 {
-                    int cost = gameManager.Gas.GetRefuelCost(nearCar);
-                    hint = "Press E to refuel " + nearCar.brandName + " ($" + cost + ")";
+                    int cost = gameManager.Gas.GetRefuelCost(gasCar);
+                    hint = "Press E to refuel " + gasCar.brandName + " ($" + cost + ")";
                 }
                 else
                 {

@@ -6,7 +6,6 @@ namespace Rise.Systems
     public class GasStation : MonoBehaviour
     {
         [SerializeField] private float interactRadius = 4f;
-        [SerializeField] private int costPerUnit = 3;
         [SerializeField] private int fullTankCost = 300;
 
         private Transform _player;

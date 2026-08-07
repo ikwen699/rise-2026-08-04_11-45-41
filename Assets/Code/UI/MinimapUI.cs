@@ -382,11 +382,11 @@ namespace Rise.UI
         {
             switch (name)
             {
-                case "House_01": return new Vector3(-40f, 0f, 18f);
-                case "House_02": return new Vector3(-20f, 0f, 18f);
-                case "House_03": return new Vector3(20f, 0f, 18f);
-                case "House_04": return new Vector3(40f, 0f, 18f);
-                case "House_05": return new Vector3(56f, 0f, 18f);
+                case "House_01": return new Vector3(-40f, 0f, 10f);
+                case "House_02": return new Vector3(-20f, 0f, 10f);
+                case "House_03": return new Vector3(20f, 0f, 10f);
+                case "House_04": return new Vector3(40f, 0f, 10f);
+                case "House_05": return new Vector3(56f, 0f, 10f);
                 case "House_06": return new Vector3(-40f, 0f, 52f);
                 case "House_07": return new Vector3(-20f, 0f, 52f);
                 case "House_08": return new Vector3(20f, 0f, 52f);

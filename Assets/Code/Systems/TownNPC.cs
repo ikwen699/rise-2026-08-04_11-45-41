@@ -27,11 +27,11 @@ namespace Rise.Systems
 
         private static readonly System.Collections.Generic.Dictionary<string, Vector3> BuildingPositions = new()
         {
-            { "House_01", new Vector3(-40f, 0f, 18f) },
-            { "House_02", new Vector3(-20f, 0f, 18f) },
-            { "House_03", new Vector3(20f, 0f, 18f) },
-            { "House_04", new Vector3(40f, 0f, 18f) },
-            { "House_05", new Vector3(56f, 0f, 18f) },
+            { "House_01", new Vector3(-40f, 0f, 10f) },
+            { "House_02", new Vector3(-20f, 0f, 10f) },
+            { "House_03", new Vector3(20f, 0f, 10f) },
+            { "House_04", new Vector3(40f, 0f, 10f) },
+            { "House_05", new Vector3(56f, 0f, 10f) },
             { "House_06", new Vector3(-40f, 0f, 52f) },
             { "House_07", new Vector3(-20f, 0f, 52f) },
             { "House_08", new Vector3(20f, 0f, 52f) },
