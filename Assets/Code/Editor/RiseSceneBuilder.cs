@@ -1971,8 +1971,42 @@ namespace Rise.EditorTools
             Text shop = CreateHudText("ShopMenu", canvasGO.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), 38, TextAnchor.MiddleCenter);
             Text phone = CreateHudText("Phone", canvasGO.transform, new Vector2(0.98f, 0.97f), new Vector2(1f, 1f), 32, TextAnchor.UpperRight);
 
+            GameObject toggleBtnGO = new GameObject("HudToggleBtn");
+            toggleBtnGO.transform.SetParent(canvasGO.transform, false);
+            RectTransform toggleRt = toggleBtnGO.AddComponent<RectTransform>();
+            toggleRt.anchorMin = new Vector2(1f, 0.5f);
+            toggleRt.anchorMax = new Vector2(1f, 0.5f);
+            toggleRt.pivot = new Vector2(1f, 0.5f);
+            toggleRt.anchoredPosition = new Vector2(-10f, 0f);
+            toggleRt.sizeDelta = new Vector2(100f, 30f);
+            Image toggleBg = toggleBtnGO.AddComponent<Image>();
+            toggleBg.color = new Color(0.15f, 0.15f, 0.2f, 0.7f);
+            Button toggleBtn = toggleBtnGO.AddComponent<Button>();
+            toggleBtn.targetGraphic = toggleBg;
+
+            GameObject toggleLabelGO = new GameObject("ToggleLabel");
+            toggleLabelGO.transform.SetParent(toggleBtnGO.transform, false);
+            RectTransform toggleLabelRt = toggleLabelGO.AddComponent<RectTransform>();
+            toggleLabelRt.anchorMin = Vector2.zero;
+            toggleLabelRt.anchorMax = Vector2.one;
+            toggleLabelRt.offsetMin = Vector2.zero;
+            toggleLabelRt.offsetMax = Vector2.zero;
+            Text toggleLabel = toggleLabelGO.AddComponent<Text>();
+            toggleLabel.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            toggleLabel.fontSize = 14;
+            toggleLabel.alignment = TextAnchor.MiddleCenter;
+            toggleLabel.color = Color.white;
+            toggleLabel.text = "HUD: ON";
+            toggleLabel.raycastTarget = false;
+
+            Text showHint = CreateHudText("ShowHint", canvasGO.transform, new Vector2(0.5f, 0.04f), new Vector2(0.5f, 0f), 20, TextAnchor.LowerCenter);
+            showHint.text = "Press TAB to show HUD";
+            showHint.color = new Color(1f, 1f, 1f, 0.6f);
+            showHint.enabled = false;
+
             GameHUD hud = canvasGO.AddComponent<GameHUD>();
             hud.Configure(gameManager, money, time, day, work, needs, shop, phone);
+            hud.SetToggleElements(toggleBtn, toggleLabel, showHint);
 
             MinimapUI minimap = canvasGO.AddComponent<MinimapUI>();
             minimap.Configure(gameManager.Player);

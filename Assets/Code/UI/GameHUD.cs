@@ -21,6 +21,9 @@ namespace Rise.UI
         private bool _hudVisible = true;
         private Text[] _hudTexts;
         private DoorInteractable[] _cachedDoors;
+        private Button _toggleBtn;
+        private Text _toggleLabel;
+        private Text _showHint;
 
         private void Start()
         {
@@ -58,6 +61,37 @@ namespace Rise.UI
             _hudTexts = new[] { moneyText, timeText, dayText, workText, needsText, shopText, phoneText };
         }
 
+        public void SetToggleElements(Button toggleBtn, Text toggleLabel, Text showHint)
+        {
+            _toggleBtn = toggleBtn;
+            _toggleLabel = toggleLabel;
+            _showHint = showHint;
+            if (_toggleBtn != null)
+                _toggleBtn.onClick.AddListener(ToggleHUD);
+            ApplyVisibility();
+        }
+
+        public void ToggleHUD()
+        {
+            _hudVisible = !_hudVisible;
+            ApplyVisibility();
+        }
+
+        private void ApplyVisibility()
+        {
+            if (_hudTexts != null)
+            {
+                foreach (Text t in _hudTexts)
+                {
+                    if (t != null) t.enabled = _hudVisible;
+                }
+            }
+            if (_toggleLabel != null)
+                _toggleLabel.text = _hudVisible ? "HUD: ON" : "HUD: OFF";
+            if (_showHint != null)
+                _showHint.enabled = !_hudVisible;
+        }
+
         private void Update()
         {
             if (gameManager == null) return;
@@ -71,19 +105,13 @@ namespace Rise.UI
                         if (t != null) t.enabled = false;
                     }
                 }
+                if (_showHint != null) _showHint.enabled = false;
                 return;
             }
 
             if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame)
             {
-                _hudVisible = !_hudVisible;
-                if (_hudTexts != null)
-                {
-                    foreach (Text t in _hudTexts)
-                    {
-                        if (t != null) t.enabled = _hudVisible;
-                    }
-                }
+                ToggleHUD();
             }
 
             if (!_hudVisible) return;
