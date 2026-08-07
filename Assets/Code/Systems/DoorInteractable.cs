@@ -230,6 +230,33 @@ namespace Rise.Systems
             exitDoor.isInteriorExit = true;
             exitDoor.interiorType = interiorType;
             exitDoor.Configure(_player, _gameManager, _fadeOverlay);
+
+            GameObject lightGO = new GameObject("InteriorLight");
+            lightGO.transform.SetParent(interior.transform);
+            lightGO.transform.localPosition = new Vector3(0f, roomH - 0.5f, 0f);
+            Light interiorLight = lightGO.AddComponent<Light>();
+            interiorLight.type = LightType.Point;
+            interiorLight.range = Mathf.Max(roomW, roomD) * 1.2f;
+            interiorLight.intensity = 1.5f;
+            interiorLight.color = new Color(1f, 0.9f, 0.7f);
+
+            if (buildingName == "Bank")
+            {
+                interiorLight.color = new Color(0.9f, 0.95f, 1f);
+                interiorLight.intensity = 1.8f;
+            }
+            else if (buildingName == "Church")
+            {
+                interiorLight.intensity = 1.2f;
+                GameObject stainedGlass = new GameObject("StainedGlassLight");
+                stainedGlass.transform.SetParent(interior.transform);
+                stainedGlass.transform.localPosition = new Vector3(0f, roomH * 0.7f, -roomD * 0.45f);
+                Light sgLight = stainedGlass.AddComponent<Light>();
+                sgLight.type = LightType.Point;
+                sgLight.range = 8f;
+                sgLight.intensity = 0.8f;
+                sgLight.color = new Color(0.6f, 0.3f, 0.8f);
+            }
         }
 
         private void BuildHouseInterior(Transform parent, string suffix, float w, float d, float h,

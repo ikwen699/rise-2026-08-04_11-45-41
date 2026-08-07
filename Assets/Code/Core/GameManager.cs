@@ -40,6 +40,8 @@ namespace Rise.Core
         public PhoneNotifier Phone { get; private set; }
         public AudioManager Audio { get; private set; }
         public PropertyManager Properties { get; private set; }
+        public SkillSystem Skills { get; private set; }
+        public WeatherSystem Weather { get; private set; }
 
         public void EnsureNeeds()
         {
@@ -62,6 +64,9 @@ namespace Rise.Core
         private readonly List<CarController> _cars = new List<CarController>();
         private readonly List<Light> _lampLights = new List<Light>();
         private readonly List<float> _lampBaseIntensities = new List<float>();
+        private readonly List<Renderer> _windowRenderers = new List<Renderer>();
+        private Material _windowLitMat;
+        private Material _windowDarkMat;
         private float _jobEarnAccumulator;
         private Transform _player;
         private Light _sun;
@@ -102,6 +107,11 @@ namespace Rise.Core
             Phone = gameObject.AddComponent<PhoneNotifier>();
             Audio = gameObject.AddComponent<AudioManager>();
             Properties = gameObject.AddComponent<PropertyManager>();
+            Skills = gameObject.AddComponent<SkillSystem>();
+            Skills.Init();
+            Weather = gameObject.AddComponent<WeatherSystem>();
+            Weather.Init();
+            Weather.OnWeatherChanged += w => Phone?.Push("Weather", "The weather is now " + w);
 
             Wallet.OnMoneyChanged += value => OnMoneyChanged?.Invoke(value);
             Clock.OnDayChanged += day => OnDayChanged?.Invoke(day);
@@ -127,6 +137,7 @@ namespace Rise.Core
             FindPlayer();
             FindSun();
             FindLamps();
+            FindWindows();
             SetupWorkStations();
             SetupShops();
             SetupClothingShops();
@@ -171,6 +182,10 @@ namespace Rise.Core
             {
                 Properties.ApplySaved(loaded.ownedProperties);
             }
+            if (Skills != null && loaded != null && loaded.skillXP != null)
+            {
+                Skills.ApplySaved(loaded.skillXP);
+            }
             if (_player != null)
             {
                 PlayerAppearance appearance = _player.GetComponent<PlayerAppearance>();
@@ -190,6 +205,8 @@ namespace Rise.Core
             UpdateAudio();
             UpdatePropertyIncome();
             UpdateStoryEvents();
+            if (Weather != null && Clock != null)
+                Weather.Tick(Time.deltaTime / Clock.SecondsPerGameHour);
         }
 
         private void FindPlayer()
@@ -236,6 +253,26 @@ namespace Rise.Core
                 {
                     _lampLights.Add(light);
                     _lampBaseIntensities.Add(light.intensity);
+                }
+            }
+        }
+
+        private void FindWindows()
+        {
+            _windowRenderers.Clear();
+            _windowLitMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            _windowLitMat.color = new Color(1f, 0.85f, 0.4f, 0.9f);
+            _windowLitMat.EnableKeyword("_EMISSION");
+            _windowLitMat.SetColor("_EmissionColor", new Color(1f, 0.85f, 0.4f) * 2f);
+            _windowDarkMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            _windowDarkMat.color = new Color(0.15f, 0.2f, 0.3f, 0.6f);
+            Renderer[] allRenderers = FindObjectsByType<Renderer>();
+            foreach (Renderer r in allRenderers)
+            {
+                if (r.gameObject.name.Contains("Window") && r.gameObject.name.Contains("Glass"))
+                {
+                    _windowRenderers.Add(r);
+                    r.sharedMaterial = _windowDarkMat;
                 }
             }
         }
@@ -374,7 +411,8 @@ namespace Rise.Core
             if (!Jobs.IsWorking || Jobs.CurrentJob == null) return;
 
             float gameHours = deltaTime / Clock.SecondsPerGameHour;
-            _jobEarnAccumulator += gameHours * Jobs.CurrentJob.HourlyPay;
+            float payBonus = Skills != null ? Skills.GetJobPayBonus() : 1f;
+            _jobEarnAccumulator += gameHours * Jobs.CurrentJob.HourlyPay * payBonus;
             int earned = Mathf.FloorToInt(_jobEarnAccumulator);
             if (earned > 0)
             {
@@ -382,6 +420,9 @@ namespace Rise.Core
                 Wallet.Add(earned);
                 Jobs.AddEarned(earned);
                 Rep?.AddReputation(1);
+                Skills?.AddXP(SkillName.Business, earned);
+                if (Jobs.CurrentJob.jobName.Contains("Bakery") || Jobs.CurrentJob.jobName.Contains("Restaurant"))
+                    Skills?.AddXP(SkillName.Cooking, earned / 2);
             }
         }
 
@@ -393,47 +434,104 @@ namespace Rise.Core
             float cycle = (hour - 6f) / 12f;
             float dayFactor = Mathf.Clamp01(1f - Mathf.Abs(cycle - 0.5f) * 2f);
 
+            float weatherMod = Weather != null ? Weather.GetAmbientIntensityModifier() : 1f;
+
             float sunElevation = Mathf.Lerp(10f, 70f, dayFactor);
             _sun.transform.rotation = Quaternion.Euler(sunElevation, -30f, 0f);
 
-            Color nightSun = new Color(0.2f, 0.25f, 0.35f);
-            Color dawnSun = new Color(1f, 0.6f, 0.3f);
+            Color nightSun = new Color(0.15f, 0.18f, 0.3f);
+            Color dawnSun = new Color(1f, 0.55f, 0.25f);
+            Color duskSun = new Color(1f, 0.4f, 0.2f);
             Color daySun = new Color(1f, 0.95f, 0.85f);
-            _sun.intensity = Mathf.Lerp(nightIntensity, dayIntensity, dayFactor);
-            if (dayFactor > 0.1f && dayFactor < 0.5f)
-                _sun.color = Color.Lerp(dawnSun, daySun, (dayFactor - 0.1f) / 0.4f);
-            else if (dayFactor <= 0.1f)
-                _sun.color = Color.Lerp(nightSun, dawnSun, dayFactor / 0.1f);
+
+            float sunrisePoint = Mathf.InverseLerp(5f, 7f, hour);
+            float sunsetPoint = Mathf.InverseLerp(17f, 19f, hour);
+            float dawnDusk = 1f - Mathf.Max(sunrisePoint, sunsetPoint);
+            float trueDayFactor = Mathf.Clamp01(dayFactor * (1f - dawnDusk * 0.6f));
+
+            _sun.intensity = Mathf.Lerp(nightIntensity, dayIntensity, trueDayFactor) * weatherMod;
+
+            if (sunrisePoint > 0f && sunrisePoint < 1f)
+                _sun.color = Color.Lerp(dawnSun, daySun, sunrisePoint);
+            else if (sunsetPoint > 0f && sunsetPoint < 1f)
+                _sun.color = Color.Lerp(daySun, duskSun, sunsetPoint);
+            else if (hour >= 19f || hour < 5f)
+                _sun.color = Color.Lerp(duskSun, nightSun, Mathf.InverseLerp(19f, 22f, hour));
             else
                 _sun.color = daySun;
 
             Material sky = RenderSettings.skybox;
             if (sky != null)
             {
-                sky.SetColor("_SkyTint", Color.Lerp(new Color(0.1f, 0.15f, 0.3f), new Color(0.48f, 0.6f, 0.85f), dayFactor));
-                sky.SetFloat("_Exposure", Mathf.Lerp(0.3f, 1.15f, dayFactor));
-                sky.SetFloat("_AtmosphereThickness", Mathf.Lerp(1.2f, 1.05f, dayFactor));
+                Color skyDay = new Color(0.48f, 0.6f, 0.85f);
+                Color skyNight = new Color(0.08f, 0.1f, 0.2f);
+                Color skyDawn = new Color(0.6f, 0.4f, 0.3f);
+                Color skyTint = skyNight;
+                if (sunrisePoint > 0f && sunrisePoint < 1f)
+                    skyTint = Color.Lerp(skyDawn, skyDay, sunrisePoint);
+                else if (sunsetPoint > 0f && sunsetPoint < 1f)
+                    skyTint = Color.Lerp(skyDay, skyDawn, sunsetPoint);
+                else if (hour >= 19f || hour < 5f)
+                    skyTint = skyNight;
+                else
+                    skyTint = skyDay;
+
+                if (Weather != null && Weather.IsRaining())
+                    skyTint = Color.Lerp(skyTint, new Color(0.3f, 0.32f, 0.38f), 0.4f);
+
+                sky.SetColor("_SkyTint", skyTint);
+                sky.SetFloat("_Exposure", Mathf.Lerp(0.3f, 1.15f, trueDayFactor) * weatherMod);
+                sky.SetFloat("_AtmosphereThickness", Mathf.Lerp(1.2f, 1.05f, trueDayFactor));
             }
 
-            RenderSettings.ambientSkyColor = Color.Lerp(new Color(0.05f, 0.06f, 0.1f), new Color(0.72f, 0.78f, 0.9f), dayFactor);
-            RenderSettings.ambientEquatorColor = Color.Lerp(new Color(0.03f, 0.03f, 0.05f), new Color(0.62f, 0.63f, 0.64f), dayFactor);
-            RenderSettings.ambientGroundColor = Color.Lerp(new Color(0.02f, 0.02f, 0.03f), new Color(0.5f, 0.48f, 0.44f), dayFactor);
-            RenderSettings.fogColor = Color.Lerp(new Color(0.05f, 0.06f, 0.1f), new Color(0.82f, 0.86f, 0.92f), dayFactor);
+            Color ambientDay = new Color(0.72f, 0.78f, 0.9f);
+            Color ambientNight = new Color(0.05f, 0.06f, 0.1f);
+            Color ambientDawn = new Color(0.5f, 0.35f, 0.25f);
+            Color ambient = ambientNight;
+            if (sunrisePoint > 0f && sunrisePoint < 1f)
+                ambient = Color.Lerp(ambientDawn, ambientDay, sunrisePoint);
+            else if (sunsetPoint > 0f && sunsetPoint < 1f)
+                ambient = Color.Lerp(ambientDay, ambientDawn, sunsetPoint);
+            else if (hour >= 19f || hour < 5f)
+                ambient = ambientNight;
+            else
+                ambient = ambientDay;
 
-            float nightFactor = 1f - dayFactor;
+            ambient *= weatherMod;
+            RenderSettings.ambientSkyColor = ambient;
+            RenderSettings.ambientEquatorColor = Color.Lerp(new Color(0.03f, 0.03f, 0.05f), new Color(0.62f, 0.63f, 0.64f), trueDayFactor) * weatherMod;
+            RenderSettings.ambientGroundColor = Color.Lerp(new Color(0.02f, 0.02f, 0.03f), new Color(0.5f, 0.48f, 0.44f), trueDayFactor) * weatherMod;
+
+            Color fogDay = new Color(0.82f, 0.86f, 0.92f);
+            Color fogNight = new Color(0.05f, 0.06f, 0.1f);
+            RenderSettings.fogColor = Weather != null
+                ? Weather.GetFogColor(trueDayFactor)
+                : Color.Lerp(fogNight, fogDay, trueDayFactor);
+            RenderSettings.fogDensity = Weather != null
+                ? Weather.GetFogDensity(0.008f)
+                : Mathf.Lerp(0.008f, 0.004f, trueDayFactor);
+
+            float nightFactor = 1f - trueDayFactor;
             for (int i = 0; i < _lampLights.Count; i++)
             {
                 Light lamp = _lampLights[i];
                 if (lamp == null) continue;
-                float targetIntensity = nightFactor > 0.3f ? _lampBaseIntensities[i] : 0f;
+                float targetIntensity = nightFactor > 0.2f ? _lampBaseIntensities[i] : 0f;
                 lamp.intensity = Mathf.Lerp(lamp.intensity, targetIntensity, Time.deltaTime * 3f);
                 lamp.enabled = lamp.intensity > 0.01f;
             }
 
             if (_moon != null)
             {
-                _moon.intensity = Mathf.Lerp(0.4f, 0f, dayFactor);
+                _moon.intensity = Mathf.Lerp(0.5f, 0f, trueDayFactor);
                 _moon.enabled = nightFactor > 0.2f;
+            }
+
+            bool windowGlow = nightFactor > 0.25f;
+            foreach (Renderer wr in _windowRenderers)
+            {
+                if (wr == null) continue;
+                wr.sharedMaterial = windowGlow ? _windowLitMat : _windowDarkMat;
             }
         }
 
@@ -443,7 +541,9 @@ namespace Rise.Core
             float hour = Clock.HourOfDay;
             float cycle = (hour - 6f) / 12f;
             float dayFactor = Mathf.Clamp01(1f - Mathf.Abs(cycle - 0.5f) * 2f);
-            Audio.UpdateCycle(dayFactor);
+            bool raining = Weather != null && Weather.IsRaining();
+            bool stormy = Weather != null && Weather.IsStormy();
+            Audio.UpdateCycle(dayFactor, raining, stormy);
         }
 
         private float _incomeAccumulator;
@@ -457,7 +557,8 @@ namespace Rise.Core
             _incomeAccumulator += gameHours;
             if (_incomeAccumulator >= 1f)
             {
-                Properties.CollectIncome(_incomeAccumulator);
+                float incomeBonus = Skills != null ? Skills.GetPropertyIncomeBonus() : 1f;
+                Properties.CollectIncome(_incomeAccumulator * incomeBonus);
                 _incomeAccumulator = 0f;
             }
         }
@@ -566,7 +667,8 @@ namespace Rise.Core
                 rivalMoney = Rival != null ? Rival.RivalMoney : 0f,
                 rivalRep = Rival != null ? Rival.RivalRep : 0f,
                 rivalDefeated = Rival != null && Rival.IsDefeated,
-                ownedProperties = Properties != null ? Properties.GetOwnedNames() : new string[0]
+                ownedProperties = Properties != null ? Properties.GetOwnedNames() : new string[0],
+                skillXP = Skills != null ? Skills.GetXPArray() : new int[0]
             });
         }
 

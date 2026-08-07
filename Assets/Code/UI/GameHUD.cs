@@ -85,6 +85,16 @@ namespace Rise.UI
                 line += "   Earned $" + gameManager.Jobs.TotalEarned;
                 if (gameManager.Properties != null && gameManager.Properties.GetTotalIncome() > 0)
                     line += "   Income $" + gameManager.Properties.GetTotalIncome() + "/hr";
+                if (gameManager.Weather != null)
+                    line += "   " + gameManager.Weather.GetWeatherEmoji();
+                if (gameManager.Skills != null)
+                {
+                    line += "\n[Skills] " + gameManager.Skills.GetSkillInfo(SkillName.Cooking)
+                        + "  " + gameManager.Skills.GetSkillInfo(SkillName.Driving)
+                        + "  " + gameManager.Skills.GetSkillInfo(SkillName.Charisma)
+                        + "  " + gameManager.Skills.GetSkillInfo(SkillName.Fitness)
+                        + "  " + gameManager.Skills.GetSkillInfo(SkillName.Business);
+                }
 
                 if (gameManager.Quests != null && !gameManager.Quests.AllComplete)
                 {
@@ -117,7 +127,10 @@ namespace Rise.UI
 
             if (activeCar != null && activeCar.IsDriving)
             {
-                SetText(shopText, "Driving " + activeCar.brandName + "\nWASD: steer  Space: brake  E: exit");
+                string fuelBar = "FUEL: " + new string('|', Mathf.RoundToInt(activeCar.FuelPercent * 10));
+                fuelBar += new string('.', 10 - Mathf.RoundToInt(activeCar.FuelPercent * 10));
+                fuelBar += " " + Mathf.RoundToInt(activeCar.FuelPercent * 100) + "%";
+                SetText(shopText, "Driving " + activeCar.brandName + "\nWASD: steer  Space: brake  E: exit\n" + fuelBar);
                 if (workText != null) workText.text = "";
                 return;
             }

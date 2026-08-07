@@ -223,7 +223,8 @@ namespace Rise.Systems
                 {
                     _homeCheckTimer = 2f;
                     int hour = Mathf.FloorToInt(_gameManager.Clock.HourOfDay) % 24;
-                    if (hour >= homeHourEnter || hour < homeHourLeave)
+                    bool stormy = _gameManager.Weather != null && _gameManager.Weather.IsStormy();
+                    if (hour >= homeHourEnter || hour < homeHourLeave || stormy)
                     {
                         if (!_isHome) { GoHome(); return; }
                     }
@@ -324,7 +325,9 @@ namespace Rise.Systems
             _lineIndex = 0;
             _gameManager.ActiveTownNPC = this;
             _gameManager.ActiveShop = null;
-            _gameManager.Rep?.AddReputation(2);
+            float repBonus = _gameManager.Skills != null ? _gameManager.Skills.GetReputationBonus() : 1f;
+            _gameManager.Rep?.AddReputation(Mathf.RoundToInt(2 * repBonus));
+            _gameManager.Skills?.AddXP(SkillName.Charisma, 3);
         }
 
         private void Close()

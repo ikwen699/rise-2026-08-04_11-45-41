@@ -17,12 +17,16 @@ namespace Rise.Systems
         public int minRep;
         public AudioClip engineClip;
 
+        private const float MaxFuel = 100f;
+        private const float FuelDrainPerSecond = 0.8f;
+        private float _fuel = MaxFuel;
         private bool _isDriving;
         private float _currentSpeed;
         private Transform _player;
         private Core.GameManager _gameManager;
         private bool _playerInRange;
         private AudioSource _engineSource;
+        private float _drivingXpAccumulator;
 
         private static InputAction s_moveAction;
         private static InputAction s_brakeAction;
@@ -31,6 +35,8 @@ namespace Rise.Systems
 
         public bool IsDriving => _isDriving;
         public bool IsPlayerInRange => _playerInRange;
+        public float Fuel => _fuel;
+        public float FuelPercent => _fuel / MaxFuel;
         public bool IsLocked(Core.GameManager gm) => gm != null && gm.Rep != null && gm.Rep.Reputation < minRep;
 
         public void Configure(Transform player, Core.GameManager gameManager)
@@ -93,9 +99,11 @@ namespace Rise.Systems
 
         private void StartDriving()
         {
+            if (_fuel <= 0f) return;
             EnsureActions();
             _isDriving = true;
             _currentSpeed = 0f;
+            _drivingXpAccumulator = 0f;
             s_moveAction.Enable();
             s_brakeAction.Enable();
             if (_gameManager.Audio != null)
@@ -141,25 +149,50 @@ namespace Rise.Systems
             Vector2 input = s_moveAction.ReadValue<Vector2>();
             bool braking = s_brakeAction.ReadValue<float>() > 0.5f;
 
+            float fuelMod = _gameManager.Skills != null ? _gameManager.Skills.GetDrivingFuelBonus() : 1f;
+            float speedMod = _gameManager.Skills != null ? _gameManager.Skills.GetDrivingSpeedBonus() : 1f;
+
             if (braking)
             {
                 _currentSpeed = Mathf.MoveTowards(_currentSpeed, 0f, brakeForce * Time.deltaTime);
             }
-            else if (Mathf.Abs(input.y) > 0.1f)
+            else if (Mathf.Abs(input.y) > 0.1f && _fuel > 0f)
             {
-                _currentSpeed = Mathf.MoveTowards(_currentSpeed, input.y * maxSpeed, acceleration * Time.deltaTime);
+                _currentSpeed = Mathf.MoveTowards(_currentSpeed, input.y * maxSpeed * speedMod, acceleration * Time.deltaTime);
+                _fuel -= FuelDrainPerSecond * Time.deltaTime / fuelMod;
+                if (_fuel < 0f) _fuel = 0f;
             }
             else
             {
                 _currentSpeed = Mathf.MoveTowards(_currentSpeed, 0f, coastDrag * Time.deltaTime);
             }
 
-            float steer = input.x * turnSpeed * Time.deltaTime * Mathf.Clamp01(Mathf.Abs(_currentSpeed) / 3f);
+            if (_fuel <= 0f && Mathf.Abs(_currentSpeed) > 0.5f)
+                _currentSpeed = Mathf.MoveTowards(_currentSpeed, 0f, brakeForce * 2f * Time.deltaTime);
+
+            float speedFactor = Mathf.Clamp01(Mathf.Abs(_currentSpeed) / maxSpeed);
+            float dynamicTurn = turnSpeed * Mathf.Lerp(1.2f, 0.6f, speedFactor);
+            float steer = input.x * dynamicTurn * Time.deltaTime * Mathf.Clamp01(Mathf.Abs(_currentSpeed) / 3f);
             transform.Rotate(0f, steer, 0f);
             transform.Translate(0f, 0f, _currentSpeed * Time.deltaTime);
 
             if (_gameManager.Audio != null)
                 _gameManager.Audio.UpdateCarEngine(_engineSource, Mathf.Abs(_currentSpeed), engineClip);
+
+            if (Mathf.Abs(_currentSpeed) > 1f)
+            {
+                _drivingXpAccumulator += Time.deltaTime;
+                if (_drivingXpAccumulator >= 3f)
+                {
+                    _gameManager.Skills?.AddXP(SkillName.Driving, 1);
+                    _drivingXpAccumulator = 0f;
+                }
+            }
+        }
+
+        public void Refuel(float amount)
+        {
+            _fuel = Mathf.Min(_fuel + amount, MaxFuel);
         }
 
         private void OnDestroy()

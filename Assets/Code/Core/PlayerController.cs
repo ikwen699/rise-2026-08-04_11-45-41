@@ -43,6 +43,7 @@ namespace Rise.Core
         private float _targetRotation;
         private float _rotationVelocity;
         private Systems.WalkAnimation _walkAnim;
+        private float _sprintXpAccumulator;
 
         public bool IsGrounded => isGrounded;
 
@@ -177,6 +178,16 @@ namespace Rise.Core
             }
 
             _controller.Move(motion * Time.deltaTime);
+
+            if (_sprintHeld && _moveInput.sqrMagnitude > 0.01f && isGrounded)
+            {
+                _sprintXpAccumulator += Time.deltaTime;
+                if (_sprintXpAccumulator >= 5f)
+                {
+                    Core.GameManager.Instance?.Skills?.AddXP(Systems.SkillName.Fitness, 1);
+                    _sprintXpAccumulator = 0f;
+                }
+            }
 
             float hSpeed = new Vector3(_controller.velocity.x, 0f, _controller.velocity.z).magnitude;
             if (_walkAnim != null) _walkAnim.SetSpeed(hSpeed);

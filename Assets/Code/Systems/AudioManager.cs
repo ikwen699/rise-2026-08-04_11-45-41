@@ -14,6 +14,8 @@ namespace Rise.Systems
         public AudioClip birdsAmbient;
         public AudioClip cricketsAmbient;
         public AudioClip townAmbient;
+        public AudioClip rainAmbient;
+        public AudioClip thunderClip;
         [Range(0f, 1f)] public float ambientVolume = 0.25f;
 
         [Header("SFX")]
@@ -26,7 +28,9 @@ namespace Rise.Systems
         private AudioSource _currentMusic;
         private AudioSource _ambientSource;
         private AudioSource _sfxSource;
+        private AudioSource _rainSource;
         private bool _usingMusicA = true;
+        private float _thunderTimer;
 
         private void Awake()
         {
@@ -34,6 +38,9 @@ namespace Rise.Systems
             _musicB = CreateChannel("MusicB");
             _ambientSource = CreateChannel("Ambient");
             _sfxSource = CreateChannel("SFX");
+            _rainSource = CreateChannel("Rain");
+            _rainSource.loop = true;
+            _rainSource.volume = 0f;
 
             _musicA.loop = true;
             _musicB.loop = true;
@@ -59,7 +66,7 @@ namespace Rise.Systems
             return go.AddComponent<AudioSource>();
         }
 
-        public void UpdateCycle(float dayFactor)
+        public void UpdateCycle(float dayFactor, bool raining, bool stormy)
         {
             bool isDay = dayFactor > 0.4f;
             AudioClip targetClip = isDay ? dayMusic : nightMusic;
@@ -74,25 +81,51 @@ namespace Rise.Systems
                 fadeIn.Play();
             }
 
+            float musicMod = stormy ? 0.6f : raining ? 0.8f : 1f;
             fadeOut.volume = Mathf.Lerp(fadeOut.volume, 0f, Time.deltaTime * crossfadeSpeed);
-            fadeIn.volume = Mathf.Lerp(fadeIn.volume, musicVolume, Time.deltaTime * crossfadeSpeed);
+            fadeIn.volume = Mathf.Lerp(fadeIn.volume, musicVolume * musicMod, Time.deltaTime * crossfadeSpeed);
 
-            if (fadeIn.volume > musicVolume * 0.9f)
+            if (fadeIn.volume > musicVolume * musicMod * 0.9f)
             {
                 fadeOut.Stop();
                 _currentMusic = fadeIn;
                 _usingMusicA = !_usingMusicA;
             }
 
+            if (raining && rainAmbient != null)
+            {
+                if (_rainSource.clip != rainAmbient)
+                {
+                    _rainSource.clip = rainAmbient;
+                    _rainSource.Play();
+                }
+                float rainTarget = stormy ? ambientVolume * 0.9f : ambientVolume * 0.5f;
+                _rainSource.volume = Mathf.Lerp(_rainSource.volume, rainTarget, Time.deltaTime * crossfadeSpeed);
+            }
+            else
+            {
+                _rainSource.volume = Mathf.Lerp(_rainSource.volume, 0f, Time.deltaTime * crossfadeSpeed);
+            }
+
+            if (stormy && thunderClip != null)
+            {
+                _thunderTimer -= Time.deltaTime;
+                if (_thunderTimer <= 0f)
+                {
+                    PlaySFX(thunderClip);
+                    _thunderTimer = Random.Range(8f, 20f);
+                }
+            }
+
             AudioClip targetAmbient = isDay ? birdsAmbient : cricketsAmbient;
-            if (targetAmbient != null && _ambientSource.clip != targetAmbient)
+            if (!raining && targetAmbient != null && _ambientSource.clip != targetAmbient)
             {
                 _ambientSource.clip = targetAmbient;
                 _ambientSource.Play();
             }
 
-            float ambientTarget = isDay ? ambientVolume : ambientVolume * 0.7f;
-            if (!isDay && cricketsAmbient == null) ambientTarget = 0f;
+            float ambientTarget = raining ? 0f : (isDay ? ambientVolume : ambientVolume * 0.7f);
+            if (!isDay && cricketsAmbient == null && !raining) ambientTarget = 0f;
             _ambientSource.volume = Mathf.Lerp(_ambientSource.volume, ambientTarget, Time.deltaTime * crossfadeSpeed);
 
             if (townAmbient != null && _ambientSource.clip == null)

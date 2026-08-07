@@ -29,6 +29,7 @@ namespace Rise.SaveSystem
         public float rivalRep;
         public bool rivalDefeated;
         public string[] ownedProperties;
+        public int[] skillXP;
     }
 
     public static class GameSave
