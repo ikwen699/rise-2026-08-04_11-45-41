@@ -77,13 +77,13 @@ namespace Rise.Systems
             _gameManager.Phone?.Push("Gas Station", "Refueled " + car.brandName + " for $" + cost + ".");
         }
 
-        private Core.CarController FindNearestCar()
+        private CarController FindNearestCar()
         {
-            Core.CarController[] cars = FindObjectsByType<Core.CarController>();
-            Core.CarController nearest = null;
+            CarController[] cars = FindObjectsByType<CarController>();
+            CarController nearest = null;
             float minDist = 10f;
 
-            foreach (Core.CarController car in cars)
+            foreach (CarController car in cars)
             {
                 if (car == null || car.IsDriving) continue;
                 float dist = Vector3.Distance(transform.position, car.transform.position);

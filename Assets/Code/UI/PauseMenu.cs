@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Rise.Core;
 using Rise.SaveSystem;
 
 namespace Rise.UI

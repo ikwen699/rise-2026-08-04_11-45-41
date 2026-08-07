@@ -27,8 +27,21 @@ namespace Rise.Systems
 
         private static readonly System.Collections.Generic.Dictionary<string, Vector3> BuildingPositions = new()
         {
-            { "House_01", new Vector3(-16f, 0f, 12f) },
-            { "House_02", new Vector3(-16f, 0f, -12f) },
+            { "House_01", new Vector3(-40f, 0f, 18f) },
+            { "House_02", new Vector3(-20f, 0f, 18f) },
+            { "House_03", new Vector3(20f, 0f, 18f) },
+            { "House_04", new Vector3(40f, 0f, 18f) },
+            { "House_05", new Vector3(56f, 0f, 18f) },
+            { "House_06", new Vector3(-40f, 0f, 52f) },
+            { "House_07", new Vector3(-20f, 0f, 52f) },
+            { "House_08", new Vector3(20f, 0f, 52f) },
+            { "House_09", new Vector3(40f, 0f, 52f) },
+            { "House_10", new Vector3(56f, 0f, 52f) },
+            { "House_11", new Vector3(-40f, 0f, -55f) },
+            { "House_12", new Vector3(-20f, 0f, -55f) },
+            { "House_13", new Vector3(20f, 0f, -55f) },
+            { "House_14", new Vector3(40f, 0f, -55f) },
+            { "House_15", new Vector3(56f, 0f, -55f) },
             { "Shop_01", new Vector3(12f, 0f, 6f) },
             { "Shop_02", new Vector3(12f, 0f, -14f) },
             { "TownHall", new Vector3(0f, 0f, -30f) },
@@ -38,13 +51,8 @@ namespace Rise.Systems
             { "School", new Vector3(-36f, 0f, 32f) },
             { "Bakery", new Vector3(-22f, 0f, 36f) },
             { "Bank", new Vector3(22f, 0f, 36f) },
-            { "House_03", new Vector3(36f, 0f, 32f) },
-            { "House_04", new Vector3(16f, 0f, 46f) },
-            { "House_05", new Vector3(-16f, 0f, 46f) },
             { "Restaurant", new Vector3(22f, 0f, -36f) },
-            { "PostOffice", new Vector3(-22f, 0f, -36f) },
-            { "House_06", new Vector3(16f, 0f, -46f) },
-            { "House_07", new Vector3(-16f, 0f, -46f) }
+            { "PostOffice", new Vector3(-22f, 0f, -36f) }
         };
 
         private int _index;

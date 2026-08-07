@@ -77,7 +77,7 @@ namespace Rise.UI
             ApplyVisibility();
         }
 
-        private void ApplyVisibility()
+        public void ApplyVisibility()
         {
             if (_hudTexts != null)
             {
@@ -90,6 +90,8 @@ namespace Rise.UI
                 _toggleLabel.text = _hudVisible ? "HUD: ON" : "HUD: OFF";
             if (_showHint != null)
                 _showHint.enabled = !_hudVisible;
+            MinimapUI minimap = GetComponent<MinimapUI>();
+            if (minimap != null) minimap.SetMarkersVisible(_hudVisible);
         }
 
         private void Update()

@@ -22,6 +22,12 @@ namespace Rise.Systems
         public event Action<string, bool> OnPropertyChanged;
         public event Action<int> OnIncomeCollected;
 
+        public PropertyData GetPropertyByIndex(int index)
+        {
+            if (index < 0 || index >= _properties.Count) return null;
+            return _properties[index];
+        }
+
         public void Configure(Core.GameManager gameManager)
         {
             _gameManager = gameManager;
@@ -62,8 +68,16 @@ namespace Rise.Systems
             AddProperty("House_03", 2000, 5f);
             AddProperty("House_04", 2000, 5f);
             AddProperty("House_05", 2000, 5f);
-            AddProperty("House_06", 2000, 5f);
-            AddProperty("House_07", 2000, 5f);
+            AddProperty("House_06", 3500, 10f);
+            AddProperty("House_07", 3500, 10f);
+            AddProperty("House_08", 3500, 10f);
+            AddProperty("House_09", 3500, 10f);
+            AddProperty("House_10", 3500, 10f);
+            AddProperty("House_11", 5000, 18f);
+            AddProperty("House_12", 5000, 18f);
+            AddProperty("House_13", 5000, 18f);
+            AddProperty("House_14", 5000, 18f);
+            AddProperty("House_15", 5000, 18f);
             AddProperty("Shop_01", 5000, 15f);
             AddProperty("Shop_02", 5000, 15f);
             AddProperty("Bakery", 5000, 15f);
